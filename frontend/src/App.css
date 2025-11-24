@@ -1,0 +1,211 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #f9fafb;
+  color: #1f2937;
+}
+
+.app-container {
+  min-height: 100vh;
+}
+
+.navbar {
+  background-color: #0084ca;
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  flex-wrap: wrap;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navbar-logo {
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.hamburger {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: none;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: white;
+  font-weight: 500;
+}
+
+.nav-links li a:hover {
+  text-decoration: underline;
+}
+
+/* 🔽 Mobile View */
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    background-color: #1f2937;
+    padding: 1rem;
+    margin-top: 1rem;
+    border-radius: 8px;
+  }
+
+  .nav-links.nav-open {
+    display: flex;
+  }
+
+  .nav-links li a {
+    padding: 0.5rem 0;
+  }
+
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .auth-section {
+    width: 100%;
+    margin-top: 1rem;
+    justify-content: flex-start;
+  }
+}
+
+.main-content {
+  padding: 2rem 1rem;
+}
+
+/* ========================================================= */
+/* 🔹 AUTHENTICATION SECTION (Sign in / Logout / Profile)    */
+/* ========================================================= */
+
+.auth-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.auth-btn {
+  background-color: white;
+  color: #0084ca;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-btn:hover {
+  background-color: #e6f3ff;
+}
+
+.auth-btn.signup {
+  background-color: #004b75;
+  color: white;
+}
+
+.auth-btn.signup:hover {
+  background-color: #0069a6;
+}
+
+.logout-btn {
+  background-color: #f43f5e;
+  border: none;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #dc2626;
+}
+
+.profile-area {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.welcome-text {
+  font-weight: 500;
+  color: #f3f4f6;
+  font-size: 0.95rem;
+}
+
+.profile-pic {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  border: 2px solid white;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.profile-pic:hover {
+  transform: scale(1.05);
+}
+
+.profile-fallback {
+  width: 35px;
+  height: 35px;
+  background-color: #e5e7eb;
+  color: #0084ca;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 2px solid white;
+}
+
+/* ========================================================= */
+/* 🔹 Small enhancement for responsiveness                   */
+/* ========================================================= */
+@media (max-width: 768px) {
+  .profile-area {
+    margin-top: 0.5rem;
+  }
+  .welcome-text {
+    font-size: 0.85rem;
+  }
+}

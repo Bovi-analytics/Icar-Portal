@@ -1,0 +1,10 @@
+master_data.csv
+MRtestFile.csv
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+.ipynb_checkpoints
+.env
+api/data/generated/
+fetch.ipynb

@@ -1,0 +1,364 @@
+/* .submit-container {
+  max-width: 650px;
+  margin: 5rem auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  font-family: "Inter", sans-serif;
+}
+
+.submit-container h2 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #1e3a8a;
+}
+
+.submit-form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #111827;
+}
+
+.submit-form input,
+.submit-form select {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.submit-button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #1d4ed8;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.submit-button:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.success-message {
+  color: #10b981;
+  font-weight: 600;
+  margin-top: -1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.error-message {
+  color: #dc2626;
+  font-weight: 600;
+  margin-top: -1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .submit-container {
+    margin: 2rem 1rem;
+    padding: 1.5rem;
+  }
+
+  .submit-container h2 {
+    font-size: 1.5rem;
+  }
+
+  .submit-button {
+    font-size: 0.95rem;
+    padding: 0.6rem;
+  }
+} */
+
+/* =========================
+   Submit Page – Modern UI
+   ========================= */
+
+/* Theme (easy to tweak) */
+:root {
+  --brand-600: #1d4ed8;  /* primary */
+  --brand-700: #1e40af;
+  --brand-800: #1e3a8a;
+  --brand-300: #93c5fd;
+  --ink: #111827;
+  --muted: #6b7280;
+  --bg: #ffffff;
+  --panel: #f8fafc;      /* light panel background */
+  --border: #e5e7eb;
+  --success: #10b981;
+  --error: #dc2626;
+  --warning: #b45309;    /* amber-700 */
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  --radius-lg: 12px;
+  --radius-md: 10px;
+  --radius-sm: 8px;
+}
+
+/* Container */
+.submit-container {
+  max-width: 820px;               /* wider to fit validation panel + preview */
+  margin: 5rem auto;
+  padding: 2rem;
+  background-color: var(--bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+}
+
+.submit-container h2 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: var(--brand-800);
+  letter-spacing: -0.01em;
+}
+
+/* Form */
+.submit-form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--ink);
+}
+
+.submit-form input,
+.submit-form select,
+.submit-form textarea {
+  width: 100%;
+  padding: 0.78rem 0.9rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.submit-form textarea {
+  min-height: 110px;
+}
+
+.submit-form input:focus,
+.submit-form select:focus,
+.submit-form textarea:focus {
+  border-color: var(--brand-600);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+}
+
+/* Buttons */
+.submit-button,
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  height: 44px;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  text-decoration: none;
+  user-select: none;
+}
+
+/* Primary submit */
+.submit-button {
+  width: 100%;
+  background-color: var(--brand-600);
+  color: #fff;
+  border: none;
+}
+.submit-button:hover:not(:disabled) { background-color: #2563eb; }
+.submit-button:disabled {
+  background-color: var(--brand-300);
+  cursor: not-allowed;
+}
+
+/* Secondary buttons */
+.btn-outline {
+  background: #fff;
+  color: var(--brand-700);
+  border-color: var(--brand-600);
+}
+.btn-outline:hover {
+  background: rgba(29, 78, 216, 0.06);
+  border-color: var(--brand-700);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--brand-700);
+  border-color: transparent;
+}
+.btn-ghost:hover {
+  background: rgba(29, 78, 216, 0.06);
+}
+
+/* Teaching / Template helper area */
+.template-helper {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+/* Schema pills */
+.schema-box small { color: var(--muted); }
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  background: #eef2ff;           /* indigo-50 */
+  color: var(--brand-800);
+  border: 1px solid #e0e7ff;     /* indigo-100 */
+}
+
+/* Validation panel */
+.validation-panel {
+  margin: 1rem 0 1.25rem;
+  padding: 1rem;
+  background: #f9fafb;           /* neutral panel */
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.validation-panel p {
+  margin: 0.25rem 0;
+  color: var(--ink);
+}
+
+.warning-message,
+.error-message,
+.success-message {
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-sm);
+  margin: 0.5rem 0 1rem;
+  font-weight: 600;
+  text-align: left;
+  border: 1px solid transparent;
+}
+
+.success-message {
+  color: var(--success);
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  text-align: center;
+}
+
+.error-message {
+  color: var(--error);
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.warning-message {
+  color: var(--warning);
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+/* Preview table */
+.preview-wrapper { margin-top: 0.75rem; }
+.table-scroll {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.preview-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f3f4f6;
+  color: #111827;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.preview-table tbody td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.preview-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* File input polish (optional but nice) */
+input[type="file"] {
+  padding: 0.6rem;
+  background: #fff;
+}
+
+/* Accessibility: focus ring for custom buttons/links */
+.btn:focus,
+.submit-button:focus,
+a.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.2);
+}
+
+/* Small helpers */
+small { color: var(--muted); }
+
+/* Responsive */
+@media (max-width: 720px) {
+  .submit-container {
+    margin: 2.5rem 1rem;
+    padding: 1.25rem;
+  }
+
+  .submit-container h2 {
+    font-size: 1.6rem;
+  }
+
+  .btn,
+  .submit-button {
+    height: 42px;
+    font-size: 0.95rem;
+  }
+
+  .pill {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .submit-container {
+    margin: 2rem 0.75rem;
+    padding: 1rem;
+  }
+  .submit-container h2 {
+    font-size: 1.4rem;
+  }
+}

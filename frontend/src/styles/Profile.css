@@ -1,0 +1,118 @@
+/* Profile.css */
+.profile-container {
+  max-width: 600px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background-color: #f9fafb;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  font-family: "Inter", sans-serif;
+}
+
+.profile-container h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.profile-status,
+.profile-error {
+  text-align: center;
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.profile-error {
+  color: #dc2626;
+}
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.profile-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0.5rem;
+  border: 2px solid #e0e7ff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-card p {
+  font-size: 1rem;
+  color: #374151;
+  margin: 0.25rem 0;
+}
+
+.profile-card strong {
+  color: #111827;
+}
+
+.profile-card input {
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+  width: 100%;
+  max-width: 300px;
+  text-align: center;
+}
+
+.edit-btn,
+.save-btn {
+  margin-top: 1.5rem;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.edit-btn:hover,
+.save-btn:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(29, 78, 216, 0.3);
+}
+
+@media (max-width: 600px) {
+  .profile-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .profile-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-card input {
+    font-size: 0.95rem;
+  }
+
+  .edit-btn,
+  .save-btn {
+    width: 100%;
+  }
+}

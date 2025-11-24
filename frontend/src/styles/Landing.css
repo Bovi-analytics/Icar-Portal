@@ -1,0 +1,174 @@
+/* ICAR Theme - Landing.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+.landing {
+  font-family: 'Roboto', sans-serif;
+  background-color: #ffffff;
+  color: #003865;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* HEADER */
+.icar-header {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: white;
+  border-bottom: 2px solid #f15a22;
+}
+
+.icar-logo {
+  height: 80px;
+  margin-right: 1rem;
+}
+
+.icar-title-block {
+  flex-grow: 1;
+}
+
+.icar-main-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #003865;
+  margin: 0;
+}
+
+/* ===================== HERO SECTION (FIXED) ===================== */
+.hero-section {
+  width: 100%;
+  padding: 4rem 1.5rem;
+  background-color: #f5faff;
+  text-align: center;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #003865;
+  margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+  font-size: 1.15rem;
+  color: #374151;
+  margin-bottom: 2rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-button {
+  background-color: #003865;
+  color: white;
+  padding: 0.9rem 2.2rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.3s ease, transform 0.25s ease;
+}
+
+.hero-button:hover {
+  background-color: #00264d;
+  transform: translateY(-2px);
+}
+
+/* INTRODUCTION SECTION */
+.landing-section.intro {
+  background-color: #f9fafb;
+  padding: 3rem 2rem;
+  max-width: 900px;
+  margin: 3rem auto;
+  line-height: 1.7;
+  border-radius: 12px;
+  text-align: left;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.intro h2 {
+  color: #003865;
+  font-size: 1.8rem;
+  margin-bottom: 1.2rem;
+  font-weight: 700;
+}
+
+.intro h3 {
+  margin-top: 2rem;
+  color: #f15a22;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.intro-list li,
+.intro-steps li {
+  margin-bottom: 0.6rem;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.contact-info {
+  margin-top: 1.5rem;
+  color: #4b5563;
+  font-style: italic;
+}
+
+/* QUICK OVERVIEW SECTION */
+.landing-section {
+  padding: 4rem 2rem;
+  max-width: 1000px;
+  margin: auto;
+  text-align: center;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.step {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.step h3 {
+  color: #003865;
+  font-weight: 600;
+}
+
+.step p {
+  color: #4b5563;
+}
+
+/* FOOTER */
+.landing-footer {
+  background-color: #f1f5f9;
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* RESPONSIVENESS */
+@media(max-width: 768px) {
+  .hero-title {
+    font-size: 1.6rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .landing-section.intro {
+    padding: 2rem 1rem;
+  }
+}
