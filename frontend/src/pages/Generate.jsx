@@ -23,9 +23,10 @@ export default function Generate() {
 
     try {
       const token = await getAccessTokenSilently();
+      const base = process.env.REACT_APP_BASE_API_URL;
 
       const response = await fetch(
-        `http://localhost:5000/api/v1/generate?email=${encodeURIComponent(
+        `${base}/api/v1/generate?email=${encodeURIComponent(
           user.email
         )}&name=${encodeURIComponent(user.name)}`,
         {
@@ -84,7 +85,7 @@ export default function Generate() {
           <p><strong>TestSet ID:</strong> {testSetId}</p>
           <p>Your dataset is ready:</p>
           <a
-            href={`http://localhost:5000${fileUrl}`}
+            href={`${process.env.REACT_APP_BASE_API_URL}${fileUrl}`}
             download
             className="download-link"
           >

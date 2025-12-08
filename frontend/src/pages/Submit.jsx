@@ -62,13 +62,15 @@ export default function Submit() {
   const MAX_SIZE_MB = 10;
 
   // ✅ Fetch organization automatically if available
+  // `${base}/api/v1/profile?email=${encodeURIComponent(user.email)}`,
   useEffect(() => {
     const fetchOrganization = async () => {
       if (!isAuthenticated || !user?.email) return;
       try {
         const token = await getAccessTokenSilently();
+        const base = process.env.REACT_APP_BASE_API_URL;
         const res = await fetch(
-          `http://localhost:5000/api/v1/profile?email=${encodeURIComponent(user.email)}`,
+          `${base}/api/v1/profile?email=${encodeURIComponent(user.email)}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -231,8 +233,9 @@ export default function Submit() {
 
     try {
       const token = await getAccessTokenSilently();
+      const base = process.env.REACT_APP_BASE_API_URL;
       const response = await fetch(
-        `http://localhost:5000/api/v1/submit?email=${encodeURIComponent(user.email)}`,
+        `${base}/api/v1/submit?email=${encodeURIComponent(user.email)}`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },

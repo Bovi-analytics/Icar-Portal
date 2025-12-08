@@ -17,10 +17,10 @@ export default function Admin() {
       try {
         setLoading(true);
 
-        // ✅ Get access token from Auth0
+        // ✅ Get access token
         const token = await getAccessTokenSilently();
 
-        // ✅ Decode token to check roles
+        // ✅ Decode roles
         const decoded = jwtDecode(token);
         const rolesClaim =
           decoded[`${process.env.REACT_APP_AUTH0_AUDIENCE}roles`] ||
@@ -29,8 +29,10 @@ export default function Admin() {
         const adminStatus = Array.isArray(rolesClaim) && rolesClaim.includes("admin");
         setIsAdmin(adminStatus);
 
-        // ✅ Build query dynamically
-        let url = `http://localhost:5000/api/v1/submissions?email=${encodeURIComponent(
+        // ✅ Build API URL dynamically
+        const base = process.env.REACT_APP_BASE_API_URL;
+
+        let url = `${base}/api/v1/submissions?email=${encodeURIComponent(
           user.email
         )}`;
         if (adminStatus) url += "&admin=yes";
@@ -66,9 +68,10 @@ export default function Admin() {
 
     try {
       const token = await getAccessTokenSilently();
+      const base = process.env.REACT_APP_BASE_API_URL;
 
       const res = await fetch(
-        `http://localhost:5000/api/v1/submission/${submissionId}`,
+        `${base}/api/v1/submission/${submissionId}`,
         {
           method: "DELETE",
           headers: {
@@ -129,7 +132,7 @@ export default function Admin() {
               <p><strong>Notes:</strong> {item.notes}</p>
 
               <a
-                href={`http://localhost:5000${item.download_url}`}
+                href={`${process.env.REACT_APP_BASE_API_URL}${item.download_url}`}
                 download
                 className="download-link"
               >
@@ -137,7 +140,7 @@ export default function Admin() {
               </a>
 
               <a
-                href={`http://localhost:5000/api/v1/compare/${item.id}?download=true`}
+                href={`${process.env.REACT_APP_BASE_API_URL}/api/v1/compare/${item.id}?download=true`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="view-button"

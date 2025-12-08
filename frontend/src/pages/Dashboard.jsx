@@ -18,22 +18,14 @@ export default function Dashboard() {
       try {
         setLoading(true);
 
-        // ✅ Get and decode the Auth0 token
         const token = await getAccessTokenSilently();
-        // const decoded = jwtDecode(token);
-
-        // const rolesClaim =
-        //   decoded[`${process.env.REACT_APP_AUTH0_AUDIENCE}roles`] ||
-        //   decoded["roles"] ||
-        //   [];
-        // const adminStatus = Array.isArray(rolesClaim) && rolesClaim.includes("admin");
-        // setIsAdmin(adminStatus);
 
         // ✅ Build endpoint dynamically
-        let url = `http://localhost:5000/api/v1/submissions?email=${encodeURIComponent(
+        const base = process.env.REACT_APP_BASE_API_URL;
+
+        let url = `${base}/api/v1/submissions?email=${encodeURIComponent(
           user.email
         )}`;
-        // if (adminStatus) url += "&admin=yes";
 
         const res = await fetch(url, {
           headers: {
@@ -65,8 +57,9 @@ export default function Dashboard() {
 
     try {
       const token = await getAccessTokenSilently();
+      const base = process.env.REACT_APP_BASE_API_URL;
 
-      const res = await fetch(`http://localhost:5000/api/v1/submission/${submissionId}`, {
+      const res = await fetch(`${base}/api/v1/submission/${submissionId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -87,9 +80,10 @@ export default function Dashboard() {
   const handleCompare = async (submissionId) => {
     try {
       const token = await getAccessTokenSilently();
+      const base = process.env.REACT_APP_BASE_API_URL;
 
       const res = await fetch(
-        `http://localhost:5000/api/v1/compare/${submissionId}?download=true`,
+        `${base}/api/v1/compare/${submissionId}?download=true`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -126,11 +120,7 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-container">
-      {/* <h2>
-        {isAdmin ? "Admin Dashboard (All Submissions)" : "Your Submitted Outputs"}
-      </h2> */}
       <p>You are viewing all submissions. Signed in as: {user?.email}</p>
-      {/* <h2>You are viewing all submissions. Signed in as: {user?.email}</h2> */}
 
       {loading ? (
         <p>Loading submissions...</p>
@@ -156,9 +146,8 @@ export default function Dashboard() {
               <p><strong>Date:</strong> {new Date(item.date).toLocaleDateString()}</p>
               <p><strong>Notes:</strong> {item.notes}</p>
 
-
               <a
-                href={`http://localhost:5000${item.download_url}`}
+                href={`${process.env.REACT_APP_BASE_API_URL}${item.download_url}`}
                 download
                 className="download-link"
               >

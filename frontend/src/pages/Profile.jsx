@@ -17,9 +17,10 @@ export default function Profile() {
       try {
         setLoading(true);
         const token = await getAccessTokenSilently();
+        const base = process.env.REACT_APP_BASE_API_URL;
 
         const res = await fetch(
-          `http://localhost:5000/api/v1/profile?email=${encodeURIComponent(user.email)}`,
+          `${base}/api/v1/profile?email=${encodeURIComponent(user.email)}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -52,8 +53,9 @@ export default function Profile() {
 
     try {
       const token = await getAccessTokenSilently();
+      const base = process.env.REACT_APP_BASE_API_URL;
 
-      const res = await fetch("http://localhost:5000/api/v1/profile-update", {
+      const res = await fetch(`${base}/api/v1/profile-update`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
