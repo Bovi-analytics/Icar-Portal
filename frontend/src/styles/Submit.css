@@ -213,7 +213,7 @@
   background: rgba(29, 78, 216, 0.06);
 }
 
-/* Teaching / Template helper area */
+/* Teaching Template helper area */
 .template-helper {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -320,7 +320,7 @@ input[type="file"] {
   background: #fff;
 }
 
-/* Accessibility: focus ring for custom buttons/links */
+/* Accessibility: focus ring for custom buttons links */
 .btn:focus,
 .submit-button:focus,
 a.btn:focus {
