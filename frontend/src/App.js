@@ -62,7 +62,7 @@ export default function App() {
           {/* ===== Left side (Logo + menu toggle) ===== */}
           <div className="navbar-left">
             <Link to="/" className="navbar-logo">
-              ICAR Portal
+              <img src="/Bovi-Analytics-Transparent.png" alt="Bovi Analytics Logo" className="navbar-logo-img" />
             </Link>
 
             <button

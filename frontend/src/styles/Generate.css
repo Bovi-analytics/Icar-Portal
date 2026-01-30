@@ -1,92 +1,130 @@
 .generate-container {
-  max-width: 600px;
+  max-width: 700px;
   margin: 3rem auto;
-  padding: 2rem;
-  background-color: #f9fafb;
-  border-radius: 16px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  padding: 3rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0, 132, 202, 0.1);
   text-align: center;
+  border: 1px solid rgba(0, 132, 202, 0.08);
 }
 
 .generate-container h2 {
-  font-size: 1.75rem;
-  color: #1d4ed8;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0084ca;
   margin-bottom: 1rem;
+  letter-spacing: -0.02em;
 }
 
 .generate-container p {
   font-size: 1.1rem;
-  color: #374151;
-  margin-bottom: 1rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  line-height: 1.7;
 }
 
 .generate-actions {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .generate-button {
-  padding: 0.75rem 2rem;
-  background-color: #2563eb;
+  padding: 1rem 2.5rem;
+  background: linear-gradient(135deg, #0084ca 0%, #006ba3 100%);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 132, 202, 0.3);
+  min-width: 200px;
 }
 
 .generate-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .generate-button:hover:enabled {
-  background-color: #1e40af;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 132, 202, 0.4);
 }
 
 .download-section {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background-color: #e0f2fe;
-  border-left: 4px solid #0284c7;
-  border-radius: 8px;
+  margin-top: 2.5rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border-left: 4px solid #0084ca;
+  border-radius: 12px;
+  text-align: left;
+  box-shadow: 0 4px 15px rgba(0, 132, 202, 0.1);
+}
+
+.download-section p {
+  margin-bottom: 0.75rem;
+  color: #475569;
+}
+
+.download-section p strong {
+  color: #0084ca;
+  font-weight: 700;
 }
 
 .download-link {
-  display: inline-block;
-  margin-top: 0.5rem;
-  color: #0284c7;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #0084ca 0%, #006ba3 100%);
+  color: white;
   font-weight: 600;
   text-decoration: none;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 132, 202, 0.3);
 }
 
 .download-link:hover {
-  text-decoration: underline;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 132, 202, 0.4);
+  text-decoration: none;
 }
 
 #error-message {
   color: #dc2626;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   text-align: center;
+  padding: 1rem;
+  background: #fef2f2;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
 }
 
 /* Responsive */
 @media (max-width: 600px) {
   .generate-container {
-    margin: 1rem;
-    padding: 1.5rem;
+    margin: 1.5rem;
+    padding: 2rem 1.5rem;
   }
 
   .generate-container h2 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
 
   .generate-button {
     width: 100%;
+    min-width: auto;
+  }
+
+  .download-section {
+    padding: 1.5rem;
   }
 }
