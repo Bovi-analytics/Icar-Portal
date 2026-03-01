@@ -57,7 +57,7 @@ export default function App() {
   // Get display name: use name if available, otherwise use email without @domain
   const getDisplayName = (user) => {
     if (user?.name && user.name.trim()) {
-      return user.name;
+      return user.name.split('@')[0];
     }
     if (user?.email) {
       // Return the part before @ (username part of email)

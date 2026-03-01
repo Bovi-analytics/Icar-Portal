@@ -149,7 +149,7 @@ export default function Admin() {
               <a
                 href={`${process.env.REACT_APP_BASE_API_URL}${item.download_url}`}
                 download
-                className="download-link"
+                // className="download-link"
               >
                 Download Test Data
               </a>
