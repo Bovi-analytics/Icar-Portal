@@ -116,9 +116,26 @@
   box-shadow: 0 4px 15px rgba(0, 132, 202, 0.3);
 }
 
-.submission-card .view-button:hover {
+.submission-card .view-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 132, 202, 0.4);
+}
+
+.submission-card .view-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.compare-error {
+  color: #ef4444;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  text-align: center;
+  padding: 0.5rem;
+  background: #fef2f2;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
 }
 
 /* Delete Icon Button */

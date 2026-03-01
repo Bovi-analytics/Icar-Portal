@@ -7,6 +7,7 @@ import Submit from "./pages/Submit";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import Analytics from "./pages/Analytics";
 import "./App.css";
 import { useAuth0 } from "@auth0/auth0-react";
 import { jwtDecode } from "jwt-decode";
@@ -53,6 +54,18 @@ export default function App() {
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
 
+  // Get display name: use name if available, otherwise use email without @domain
+  const getDisplayName = (user) => {
+    if (user?.name && user.name.trim()) {
+      return user.name;
+    }
+    if (user?.email) {
+      // Return the part before @ (username part of email)
+      return user.email.split('@')[0];
+    }
+    return 'User';
+  };
+
   if (isLoading) return <div className="loading">Loading...</div>;
 
   return (
@@ -77,11 +90,18 @@ export default function App() {
           {/* ===== Middle nav links ===== */}
           <ul className={`nav-links ${isNavOpen ? "nav-open" : ""}`}>
             {userRoles.includes("admin") && (
-              <li>
-                <Link to="/admin" onClick={closeMenu}>
-                  Admin Page
-                </Link>
-              </li>
+              <>
+                <li>
+                  <Link to="/admin" onClick={closeMenu}>
+                    Admin Page
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/analytics" onClick={closeMenu}>
+                    Analytics
+                  </Link>
+                </li>
+              </>
             )}
             <li>
               <Link to="/generate" onClick={closeMenu}>
@@ -125,7 +145,7 @@ export default function App() {
             ) : (
               <div className="profile-area">
                 <span className="welcome-text">
-                  Hi, {titleCase(user?.name)}
+                  Hi, {titleCase(getDisplayName(user))}
                 </span>
                 <button
                   className="logout-btn"
@@ -136,16 +156,20 @@ export default function App() {
                   Logout
                 </button>
                 {user?.picture ? (
-                  <img
-                    src={user.picture}
-                    alt="Profile"
-                    className="profile-pic"
-                    title={user.name}
-                  />
+                  <Link to="/profile" onClick={closeMenu} className="profile-pic-link">
+                    <img
+                      src={user.picture}
+                      alt="Profile"
+                      className="profile-pic"
+                      title={getDisplayName(user)}
+                    />
+                  </Link>
                 ) : (
-                  <div className="profile-fallback" title={user?.name}>
-                    {user?.name?.charAt(0).toUpperCase()}
-                  </div>
+                  <Link to="/profile" onClick={closeMenu} className="profile-pic-link">
+                    <div className="profile-fallback" title={getDisplayName(user)}>
+                      {getDisplayName(user)?.charAt(0).toUpperCase()}
+                    </div>
+                  </Link>
                 )}
               </div>
             )}
@@ -161,6 +185,7 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/analytics" element={<Analytics />} />
           </Routes>
         </main>
       </div>

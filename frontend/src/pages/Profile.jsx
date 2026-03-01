@@ -6,9 +6,22 @@ export default function Profile() {
   const { user, isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [organization, setOrganization] = useState("");
   const [error, setError] = useState("");
+
+  // Get display name: use name if available, otherwise use email without @domain
+  const getDisplayName = (user) => {
+    if (user?.name && user.name.trim()) {
+      return user.name;
+    }
+    if (user?.email) {
+      // Return the part before @ (username part of email)
+      return user.email.split('@')[0];
+    }
+    return 'User';
+  };
 
   // Fetch profile from backend
   useEffect(() => {
@@ -53,6 +66,9 @@ export default function Profile() {
       return;
     }
 
+    setSaving(true);
+    setError("");
+
     try {
       const token = await getAccessTokenSilently();
       const base = process.env.REACT_APP_BASE_API_URL;
@@ -82,12 +98,15 @@ export default function Profile() {
       };
       setProfile(profileData);
       setOrganization(profileData.organization);
-      setEditMode(false);
       setError(""); // Clear errors on success
+      // Exit edit mode after successful save to show the updated value
+      setEditMode(false);
     } catch (err) {
       console.error("Error saving organization:", err);
       setError(err.message || "Error updating organization. Try again.");
-      // Don't clear organization field - let user try again
+      // Stay in edit mode on error so user can fix and try again
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -110,7 +129,7 @@ export default function Profile() {
         )}
 
         <p>
-          <strong>Name:</strong> {user.name}
+          <strong>Name:</strong> {getDisplayName(user)}
         </p>
         <p>
           <strong>Email:</strong> {user.email}
@@ -131,8 +150,12 @@ export default function Profile() {
         </p>
 
         {editMode ? (
-          <button className="save-btn" onClick={handleSave}>
-            Save
+          <button 
+            className="save-btn" 
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? "Saving..." : "Save"}
           </button>
         ) : (
           <button className="edit-btn" onClick={() => setEditMode(true)}>

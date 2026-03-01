@@ -608,3 +608,73 @@ def compare_submission(submission_id):
     except Exception as e:
         print(e)
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app_views.route('/analytics', methods=['GET'], strict_slashes=False)
+@require_auth()
+def get_analytics():
+    """Get analytics data - admin only"""
+    try:
+        user_email = request.args.get("email")
+        if not user_email:
+            return jsonify({"success": False, "message": "Missing user email"}), 400
+        
+        # Reload storage to get latest data
+        storage.reload()
+        
+        # Check if user exists and get admin status from request
+        admin_role = request.args.get("admin")
+        if admin_role != "yes":
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+        
+        # Get counts for each object type
+        user_count = storage.count(User)
+        submission_count = storage.count(Submission)
+        generate_count = storage.count(Generate)
+        
+        # Get additional statistics
+        all_users = storage.all(User)
+        all_submissions = storage.all(Submission)
+        all_generates = storage.all(Generate)
+        
+        # Count users with organizations
+        users_with_org = sum(1 for u in all_users.values() if u.organization and u.organization.strip())
+        
+        # Count submissions by country (if available)
+        countries = {}
+        for sub in all_submissions.values():
+            country = sub.country or "Unknown"
+            countries[country] = countries.get(country, 0) + 1
+        
+        # Count submissions by calculation method
+        methods = {}
+        for sub in all_submissions.values():
+            method = sub.calculation_method or "Unknown"
+            methods[method] = methods.get(method, 0) + 1
+        
+        # Get date range for submissions
+        submission_dates = []
+        for sub in all_submissions.values():
+            if hasattr(sub, 'created_at') and sub.created_at:
+                submission_dates.append(sub.created_at.strftime("%Y-%m-%d"))
+        
+        return jsonify({
+            "success": True,
+            "data": {
+                "counts": {
+                    "users": user_count,
+                    "submissions": submission_count,
+                    "generates": generate_count
+                },
+                "statistics": {
+                    "users_with_organization": users_with_org,
+                    "users_without_organization": user_count - users_with_org,
+                    "submissions_by_country": countries,
+                    "submissions_by_method": methods,
+                    "submission_dates": submission_dates
+                }
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500

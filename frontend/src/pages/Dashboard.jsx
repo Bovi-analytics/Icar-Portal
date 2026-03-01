@@ -7,6 +7,8 @@ import { useAuth0 } from "@auth0/auth0-react";
 export default function Dashboard() {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [comparing, setComparing] = useState({}); // Track which submission is being compared
+  const [compareError, setCompareError] = useState(null);
   // const [isAdmin, setIsAdmin] = useState(false);
 
   const { user, isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
@@ -93,6 +95,9 @@ export default function Dashboard() {
   };
 
   const handleCompare = async (submissionId) => {
+    setComparing(prev => ({ ...prev, [submissionId]: true }));
+    setCompareError(null);
+
     try {
       const token = await getAccessTokenSilently();
       const base = process.env.REACT_APP_BASE_API_URL;
@@ -106,7 +111,10 @@ export default function Dashboard() {
         }
       );
 
-      if (!res.ok) throw new Error("Failed to download comparison PDF");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to download comparison PDF");
+      }
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -119,8 +127,20 @@ export default function Dashboard() {
       link.remove();
 
       window.URL.revokeObjectURL(url);
+      setCompareError(null);
     } catch (err) {
       console.error("Error downloading PDF:", err);
+      setCompareError(submissionId);
+      // Show error for 5 seconds, then clear
+      setTimeout(() => {
+        setCompareError(prev => prev === submissionId ? null : prev);
+      }, 5000);
+    } finally {
+      setComparing(prev => {
+        const newState = { ...prev };
+        delete newState[submissionId];
+        return newState;
+      });
     }
   };
 
@@ -169,9 +189,23 @@ export default function Dashboard() {
                 Download Test Data
               </a>
 
-              <button className="view-button" onClick={() => handleCompare(item.id)}>
-                View Comparison
+              <button 
+                className="view-button" 
+                onClick={() => handleCompare(item.id)}
+                disabled={comparing[item.id]}
+              >
+                {comparing[item.id] ? "Loading..." : "View Comparison"}
               </button>
+              {compareError === item.id && (
+                <p className="compare-error" style={{ 
+                  color: "#ef4444", 
+                  fontSize: "0.9rem", 
+                  marginTop: "0.5rem",
+                  textAlign: "center"
+                }}>
+                  Failed to compare. Please try again.
+                </p>
+              )}
             </div>
           ))}
         </div>

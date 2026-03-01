@@ -121,7 +121,13 @@
 }
 
 .edit-btn:hover,
-.save-btn:hover {
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.save-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 132, 202, 0.4);
 }

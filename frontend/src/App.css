@@ -188,6 +188,19 @@ body {
   font-size: 0.95rem;
 }
 
+.profile-pic-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.profile-pic-link:hover {
+  transform: scale(1.1);
+}
+
 .profile-pic {
   width: 35px;
   height: 35px;
@@ -196,9 +209,10 @@ body {
   object-fit: cover;
   cursor: pointer;
   transition: transform 0.2s ease;
+  display: block;
 }
 
-.profile-pic:hover {
+.profile-pic-link:hover .profile-pic {
   transform: scale(1.05);
 }
 
@@ -214,6 +228,11 @@ body {
   font-weight: 700;
   font-size: 0.9rem;
   border: 2px solid white;
+  transition: transform 0.2s ease;
+}
+
+.profile-pic-link:hover .profile-fallback {
+  transform: scale(1.05);
 }
 
 /* ========================================================= */
