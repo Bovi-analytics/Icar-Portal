@@ -105,9 +105,10 @@ def generate_comparison_pdf(details, metrics, user_name, generate_obj, submissio
     pdf.set_text_color(0, 0, 0)
     pdf.multi_cell(0, 8,
         f"Name of Organization: {details['organization']}\n"
-        f"Date Reported: {details['date_reported']}\n"
-        f"Report Requested By: {user_name}\n"
+        f"Date Reported on: {details['date_reported']}\n"
+        f"Report Requested By: {user_name.title()}\n"
         f"Method of Calculation Applied: {details['calculation_method']}\n"
+        f"Test Set ID: {details['test_set_id']}\n"
         f"Country: {details['country']}\n"
     )
     pdf.ln(4)
@@ -132,7 +133,7 @@ def generate_comparison_pdf(details, metrics, user_name, generate_obj, submissio
 
         # Row 1 — Reference Calculation
         pdf.set_font("Arial", '', 10)
-        pdf.cell(col_widths[0], 8, "Reference Calculation", 1)
+        pdf.cell(col_widths[0], 8, "RCALY", 1)
         pdf.cell(col_widths[1], 8, f"{primary_metrics['pearson_correlation']:.3f}", 1, 0, 'C')
         pdf.cell(col_widths[2], 8, f"{primary_metrics['root_mean_squared_error']:.2f}", 1, 0, 'C')
         pdf.cell(col_widths[3], 8, f"{primary_metrics['mean_absolute_error']:.2f}", 1, 0, 'C')
@@ -143,7 +144,7 @@ def generate_comparison_pdf(details, metrics, user_name, generate_obj, submissio
         pdf.set_fill_color(0, 109, 132)
         pdf.set_text_color(255, 255, 255)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(col_widths[0], 8, "Actual Accum. Lactation Yields", 1, fill=True)
+        pdf.cell(col_widths[0], 8, "ALY", 1, fill=True)
         pdf.set_font("Arial", '', 10)
         pdf.set_text_color(0, 0, 0)
         pdf.cell(col_widths[1], 8, f"{icar_metrics['pearson_correlation']:.3f}", 1, 0, 'C')
@@ -181,7 +182,7 @@ def generate_comparison_pdf(details, metrics, user_name, generate_obj, submissio
     icar_ref = [ref_map.get(str(tid)) for tid in submission_obj.test_obj_ids]
     icar_metrics = safe_calculate_metrics(icar_ref, submission_obj.calculated_milk_yields)
 
-    draw_metrics_table("Overall Performance (All Parities Combined)", metrics, icar_metrics)
+    draw_metrics_table("Calculation Evaluation and Comparison", metrics, icar_metrics)
 
     # Add Abbreviations Section
     pdf.set_font("Arial", 'I', 8)
@@ -190,6 +191,7 @@ def generate_comparison_pdf(details, metrics, user_name, generate_obj, submissio
         "Abbreviations Used:\n"
         "RCALY - Reference Calculated Accumulated Lactation Yield\n"
         "SCALY - Submitted Calculated Accumulated Lactation Yield"
+        "ALY - Actual Accumulated Lactation Yield"
     )
     pdf.ln(2)
     pdf.set_text_color(0, 0, 0)

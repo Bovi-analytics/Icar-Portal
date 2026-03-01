@@ -188,6 +188,7 @@ def generate_random_dataset():
                 user.name = user_name
                 user.save()
                 generate_obj.user_id = user.id
+                generate_obj.save()
                 break
 
         if not user or user.email != user_email:
@@ -196,7 +197,7 @@ def generate_random_dataset():
             user.name = user_name
             user.save()
             generate_obj.user_id = user.id
-
+            generate_obj.save()
         # Estimated yields
         estimated_yields = test_interval_method(generated_df)
         generate_obj.test_obj_ids = list(estimated_yields['TestId'])

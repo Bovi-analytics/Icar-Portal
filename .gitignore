@@ -9,3 +9,5 @@ __pycache__/
 api/data/generated/
 fetch.ipynb
 data
+trash
+ARCHITECTURE.md

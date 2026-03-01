@@ -32,7 +32,7 @@ def fetch_profile():
         if user.email == email:
             return jsonify({"organization": user.organization})
 
-    return jsonify({"organization": ""})
+    return jsonify({"organization": ""}), 201
 
 @app_views.route('/profile-update', methods=['POST'], strict_slashes=False)
 @require_auth()
