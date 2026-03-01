@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { FaTrashAlt } from "react-icons/fa";
 import { useAuth0 } from "@auth0/auth0-react";
 import { jwtDecode } from "jwt-decode";
