@@ -102,7 +102,7 @@ export default function Analytics() {
 
       {/* Main Counts Section */}
       <div className="analytics-section">
-        <h3>Object Counts</h3>
+        <h3>Database Tables</h3>
         <div className="counts-grid">
           <div className="count-card">
             <div className="count-icon">👥</div>
