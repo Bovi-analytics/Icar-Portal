@@ -22,17 +22,25 @@ require_auth.register_token_validator(validator)
 def fetch_profile():
     """Get User info route"""
     email = request.args.get("email")
-    # print(email)
     if not email:
         return jsonify({"success": False, "message": "Email is required"}), 400
 
+    # Reload to get latest data
+    storage.reload()
+    
     # Check if user already exists
     all_users = storage.all(User)
     for user in all_users.values():
         if user.email == email:
-            return jsonify({"organization": user.organization})
+            return jsonify({
+                "organization": user.organization or "",
+                "email": user.email
+            })
 
-    return jsonify({"organization": ""}), 201
+    return jsonify({
+        "organization": "",
+        "email": email
+    }), 200
 
 @app_views.route('/profile-update', methods=['POST'], strict_slashes=False)
 @require_auth()
@@ -44,17 +52,32 @@ def update_profile():
     if not email:
         return jsonify({"success": False, "message": "Email is required"}), 400
 
+    if not organization or not organization.strip():
+        return jsonify({"success": False, "message": "Organization cannot be empty"}), 400
+
     # Check if user already exists
+    storage.reload()
     all_users = storage.all(User)
-    for user in all_users.values():
-        if user.email == email:
-            user.organization = organization
-            user.save()
-            return jsonify({"organization": user.organization})
+    user = None
+    for u in all_users.values():
+        if u.email == email:
+            user = u
+            break
+    
+    if user:
+        user.organization = organization.strip()
+        user.save()
+        return jsonify({
+            "organization": user.organization,
+            "email": user.email
+        })
     
     # otherwise create a new user
     user = User()
-    user.organization = organization
+    user.organization = organization.strip()
     user.email = email
     user.save()
-    return jsonify({"organization": user.organization})
+    return jsonify({
+        "organization": user.organization,
+        "email": user.email
+    })

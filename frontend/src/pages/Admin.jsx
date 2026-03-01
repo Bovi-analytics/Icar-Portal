@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { FaTrashAlt } from "react-icons/fa";
 import { useAuth0 } from "@auth0/auth0-react";
 import { jwtDecode } from "jwt-decode";
@@ -10,8 +10,7 @@ export default function Admin() {
 
   const { user, isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
 
-  useEffect(() => {
-    const fetchAllSubmissions = async () => {
+  const fetchAllSubmissions = React.useCallback(async () => {
       if (!isAuthenticated || !user?.email) return;
 
       try {
@@ -51,16 +50,32 @@ export default function Admin() {
           setSubmissions(data);
         } else {
           console.error("Failed to fetch submissions:", data.message);
+          // Don't clear submissions on error - preserve existing data
         }
       } catch (err) {
         console.error("Failed to fetch submissions", err);
+        // Don't clear submissions on error - preserve existing data
       } finally {
         setLoading(false);
       }
+  }, [isAuthenticated, user?.email, getAccessTokenSilently]); // Use user?.email instead of user object
+
+  useEffect(() => {
+    fetchAllSubmissions();
+  }, [fetchAllSubmissions]);
+
+  // Listen for new submissions from submit page
+  useEffect(() => {
+    const handleSubmissionCreated = () => {
+      // Refresh submissions when a new one is created
+      fetchAllSubmissions();
     };
 
-    fetchAllSubmissions();
-  }, [isAuthenticated, user, getAccessTokenSilently]);
+    window.addEventListener('submissionCreated', handleSubmissionCreated);
+    return () => {
+      window.removeEventListener('submissionCreated', handleSubmissionCreated);
+    };
+  }, [fetchAllSubmissions]);
 
   const handleDelete = async (submissionId) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this submission?");

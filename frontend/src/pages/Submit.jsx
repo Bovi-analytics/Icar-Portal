@@ -87,7 +87,7 @@ export default function Submit() {
       }
     };
     fetchOrganization();
-  }, [isAuthenticated, user, getAccessTokenSilently]);
+  }, [isAuthenticated, user?.email, getAccessTokenSilently]); // Use user?.email instead of user object
 
   const resetValidation = () => {
     setHeaderInfo({ headers: [], missing: [], extra: [], sheetName: "" });
@@ -251,6 +251,9 @@ export default function Submit() {
         setOtherMethod("");
         setTestSetId("");
         resetValidation();
+        
+        // Trigger event to refresh dashboard and admin pages
+        window.dispatchEvent(new CustomEvent('submissionCreated'));
       } else {
         const data = await response.json();
         setError(data.message || "Submission failed");

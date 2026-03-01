@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import "../styles/Dashboard.css";
 import { FaTrashAlt } from "react-icons/fa";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -11,8 +11,7 @@ export default function Dashboard() {
 
   const { user, isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
 
-  useEffect(() => {
-    const fetchSubmissions = async () => {
+  const fetchSubmissions = React.useCallback(async () => {
       if (!isAuthenticated || !user?.email) return;
 
       try {
@@ -40,16 +39,32 @@ export default function Dashboard() {
           setSubmissions(data);
         } else {
           console.error("Failed to fetch submissions:", data.message);
+          // Don't clear submissions on error - preserve existing data
         }
       } catch (err) {
         console.error("Failed to fetch submissions", err);
+        // Don't clear submissions on error - preserve existing data
       } finally {
         setLoading(false);
       }
+  }, [isAuthenticated, user?.email, getAccessTokenSilently]); // Use user?.email instead of user object
+
+  useEffect(() => {
+    fetchSubmissions();
+  }, [fetchSubmissions]);
+
+  // Listen for new submissions from submit page
+  useEffect(() => {
+    const handleSubmissionCreated = () => {
+      // Refresh submissions when a new one is created
+      fetchSubmissions();
     };
 
-    fetchSubmissions();
-  }, [isAuthenticated, user, getAccessTokenSilently]);
+    window.addEventListener('submissionCreated', handleSubmissionCreated);
+    return () => {
+      window.removeEventListener('submissionCreated', handleSubmissionCreated);
+    };
+  }, [fetchSubmissions]);
 
   const handleDelete = async (submissionId) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this submission?");

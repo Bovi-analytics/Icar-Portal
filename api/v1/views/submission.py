@@ -368,13 +368,18 @@ def submit_data():
         if not user_email:
             return jsonify({"success": False, "message": "Missing user email"}), 400
         
+        # Reload storage to get latest data before write operation
+        storage.reload()
+        
         # Check if user exists
         all_users = storage.all(User)
-        for user in all_users.values():
-            if user.email == user_email:
+        user = None
+        for u in all_users.values():
+            if u.email == user_email:
+                user = u
                 break
         
-        if not user or user.email != user_email:
+        if not user:
             return jsonify({"success": False, "message": "User not found"}), 404
         
         # 2. Parse metadata
@@ -428,21 +433,33 @@ def get_submissions():
         user_email = request.args.get("email")
         if not user_email:
             return jsonify({"success": False, "message": "Missing user email"}), 400
+        
+        # Reload storage to get latest data (optional for reads, but helps with data freshness)
+        storage.reload()
+        
         # Check if user exists
         all_users = storage.all(User)
-        for user in all_users.values():
-            if user.email == user_email:
+        user = None
+        for u in all_users.values():
+            if u.email == user_email:
+                user = u
                 break
         
         # get the admin role from the request args
         admin_role = request.args.get("admin")
 
-        if (not user or user.email != user_email) and admin_role == "yes":
+        if not user and admin_role == "yes":
             all_submissions = storage.all(Submission)
             submissions_list = []
-            # print("User found:", user.name, user.email)
             for submission in all_submissions.values():
-                # print("Found submission:", submission.id)
+                # Get user name from the generate object
+                generate_obj = storage.get(Generate, submission.generate_id)
+                user_name = "Unknown"
+                if generate_obj:
+                    gen_user = storage.get(User, generate_obj.user_id)
+                    if gen_user:
+                        user_name = gen_user.name or "Unknown"
+                
                 submissions_list.append({
                     "id": submission.id,
                     "generate_id": submission.generate_id,
@@ -450,15 +467,14 @@ def get_submissions():
                     "notes": submission.notes,
                     "download_url": submission.download_url,
                     "organization": submission.organization,
-                    "name": user.name,
+                    "name": user_name,
                     "country": submission.country,
                     "test_set_id": submission.generate_id,
                     "date": submission.created_at.strftime("%Y-%m-%d %H:%M:%S"),
                 })
-            # print(submissions_list)
             return jsonify(submissions_list), 200
 
-        if not user or user.email != user_email:
+        if not user:
             return jsonify({"success": False, "message": "User not found"}), 404
         
         
@@ -514,9 +530,12 @@ def get_submissions():
 
 # create a delete route to delete submission based on the id
 @app_views.route('/submission/<submission_id>', methods=['DELETE'], strict_slashes=False)
+@require_auth()
 def delete_submission(submission_id):
     try:
-        # print("Deleting submission with ID:", submission_id)
+        # Reload storage to get latest data before delete operation
+        storage.reload()
+        
         submission = storage.get(Submission, submission_id)
         if not submission:
             return jsonify({"success": False, "message": "Submission not found"}), 404

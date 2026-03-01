@@ -34,16 +34,18 @@ export default function Profile() {
         const data = await res.json();
         setProfile(data);
         setOrganization(data.organization || "");
+        setError(""); // Clear any previous errors
       } catch (err) {
         console.error("Error fetching profile:", err);
         setError("Could not load profile. Please try again.");
+        // Don't clear profile on error - preserve existing data
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [isAuthenticated, user, getAccessTokenSilently]);
+  }, [isAuthenticated, user?.email, getAccessTokenSilently]); // Use user?.email instead of user object
 
   const handleSave = async () => {
     if (!organization.trim()) {
@@ -67,14 +69,25 @@ export default function Profile() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to update profile");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to update profile");
+      }
 
       const updated = await res.json();
-      setProfile(updated);
+      // Ensure consistent structure
+      const profileData = {
+        organization: updated.organization || organization.trim(),
+        email: updated.email || user.email
+      };
+      setProfile(profileData);
+      setOrganization(profileData.organization);
       setEditMode(false);
+      setError(""); // Clear errors on success
     } catch (err) {
       console.error("Error saving organization:", err);
-      setError("Error updating organization. Try again.");
+      setError(err.message || "Error updating organization. Try again.");
+      // Don't clear organization field - let user try again
     }
   };
 
