@@ -177,27 +177,36 @@ def generate_random_dataset():
         download_link_locally = upload_excel_file(excel_stream_local, filename, storage_mode="local")
         download_link = upload_excel_file(excel_stream_azure, filename, storage_mode="azure")
 
-        # User handling
+        # User handling - reload to get latest data
+        storage.reload()
+        
         user_email = request.args.get('email')
         user_name = request.args.get('name')
 
         all_users = storage.all(User)
         user = None
-        for user in all_users.values():
-            if user.email == user_email:
-                user.name = user_name
-                user.save()
-                generate_obj.user_id = user.id
-                generate_obj.save()
+        for u in all_users.values():
+            if u.email == user_email:
+                user = u
                 break
 
-        if not user or user.email != user_email:
-            user = User()
-            user.email = user_email
-            user.name = user_name
+        if user:
+            # Update existing user - preserve organization if it exists
+            if user_name:
+                user.name = user_name
+            # Don't overwrite organization - preserve existing value
             user.save()
             generate_obj.user_id = user.id
-            generate_obj.save()
+        else:
+            # Create new user
+            user = User()
+            user.email = user_email
+            user.name = user_name or ""
+            # Organization will be empty for new users - they can set it in profile
+            user.save()
+            generate_obj.user_id = user.id
+        
+        generate_obj.save()
         # Estimated yields
         estimated_yields = test_interval_method(generated_df)
         generate_obj.test_obj_ids = list(estimated_yields['TestId'])
