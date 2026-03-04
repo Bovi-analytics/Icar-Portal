@@ -412,10 +412,10 @@ export default function Submit() {
         <label>Method of Calculation</label>
         <select value={method} onChange={(e) => setMethod(e.target.value)} required>
           <option value="">Select a method</option>
-          <option value="TIM">The Test Interval Method (TIM)</option>
-          <option value="ISLC">Interpolation using Standard Lactation Curves (ISLC)</option>
-          <option value="BP">Best Prediction (BP)</option>
-          <option value="MTP">Multiple-Trait Procedure (MTP)</option>
+          <option value="The Test Interval Method (TIM)">The Test Interval Method (TIM)</option>
+          <option value="Interpolation using Standard Lactation Curves (ISLC)">Interpolation using Standard Lactation Curves (ISLC)</option>
+          <option value="Best Prediction (BP)">Best Prediction (BP)</option>
+          <option value="Multiple-Trait Procedure (MTP)">Multiple-Trait Procedure (MTP)</option>
           <option value="Other">Other (please specify)</option>
         </select>
 

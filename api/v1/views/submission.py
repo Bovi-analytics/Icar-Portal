@@ -89,82 +89,187 @@ def generate_comparison_pdf(details, metrics, user_name, generate_obj, submissio
 
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.set_auto_page_break(auto=True, margin=20)
 
-    # ===== HEADER =====
-    logo_path = "icar_logo.png"
-    if os.path.exists(logo_path):
-        pdf.image(logo_path, x=160, y=10, w=30)
+    # ===== HEADER WITH LOGOS =====
+    # Try multiple possible paths for logos
+    base_paths = [
+        os.path.join(os.getcwd(), "frontend", "public"),
+        os.path.join(os.getcwd(), "api", "v1", "views"),
+        os.getcwd(),
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    ]
+    
+    icar_logo_path = None
+    bovi_logo_path = None
+    
+    for base in base_paths:
+        icar_path = os.path.join(base, "icar-logo.png")
+        bovi_path = os.path.join(base, "Bovi-Analytics-Transparent.png")
+        if not icar_logo_path and os.path.exists(icar_path):
+            icar_logo_path = icar_path
+        if not bovi_logo_path and os.path.exists(bovi_path):
+            bovi_logo_path = bovi_path
+    
+    # Add logos at the top
+    y_pos = 10
+    if bovi_logo_path:
+        try:
+            pdf.image(bovi_logo_path, x=15, y=y_pos, w=25)
+        except:
+            pass
+    
+    if icar_logo_path:
+        try:
+            pdf.image(icar_logo_path, x=170, y=y_pos, w=25)
+        except:
+            pass
 
-    pdf.set_font("Arial", 'B', 15)
+    # Title with better styling
+    pdf.set_font("Arial", 'B', 18)
     pdf.set_text_color(0, 0, 128)
-    pdf.cell(0, 10, "Cumulative Milk Yield Calculation Report", ln=True, align="C")
+    pdf.ln(8)
+    pdf.cell(0, 12, "Cumulative Milk Yield Calculation Report", ln=True, align="C")
+    pdf.ln(2)
+    
+    # Add a decorative line
+    pdf.set_draw_color(0, 109, 132)
+    pdf.set_line_width(0.5)
+    pdf.line(20, pdf.get_y(), 190, pdf.get_y())
+    pdf.ln(8)
+
+    # Report details with better formatting
+    pdf.set_font("Arial", 'B', 11)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(60, 7, "Name of Organization:", 0, 0)
+    pdf.set_font("Arial", '', 11)
+    pdf.cell(0, 7, details['organization'], ln=True)
+    
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(60, 7, "Report generated on:", 0, 0)
+    pdf.set_font("Arial", '', 11)
+    pdf.cell(0, 7, details['date_reported'], ln=True)
+    
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(60, 7, "Report Requested By:", 0, 0)
+    pdf.set_font("Arial", '', 11)
+    pdf.cell(0, 7, user_name.title(), ln=True)
+    
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(60, 7, "Method of Calculation Applied:", 0, 0)
+    pdf.set_font("Arial", '', 11)
+    pdf.cell(0, 7, details['calculation_method'], ln=True)
+    
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(60, 7, "Test Set ID:", 0, 0)
+    pdf.set_font("Arial", '', 11)
+    pdf.cell(0, 7, details['test_set_id'], ln=True)
+    
+    pdf.set_font("Arial", 'B', 11)
+    pdf.cell(60, 7, "Country:", 0, 0)
+    pdf.set_font("Arial", '', 11)
+    pdf.cell(0, 7, details['country'] if details['country'] else "N/A", ln=True)
+    pdf.ln(8)
+    
+    # ===== Introduction Section =====
+    pdf.set_font("Arial", 'B', 13)
+    pdf.set_fill_color(201, 227, 242)
+    pdf.set_text_color(0, 0, 128)
+    pdf.cell(190, 9, "Introduction", ln=True, fill=True)
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", '', 10)
+    pdf.set_text_color(0, 0, 0)
+    intro_text = (
+        "This report compares the results of the calculation of cumulative milk yield per lactation "
+        "(calculated over 305 days) of the organization (SCALY) with the reference calculation of ICAR "
+        "for the chosen method (RCALY) and with the actual milk production of the cow for that lactation (ALY). "
+        "The reference calculations are coming from the ICAR guideline Procedure 2 of section 2 "
+        "(https://www.icar.org/Guidelines/02-Procedure-2-Computing-Lactation-Yield.pdf). "
+        "The actual milk production is obtained by measuring the cow's milk yield every day and summing "
+        "these daily values to determine the true 305-day milk yield.\n\n"
+        "We acknowledge that even when the same methods are applied, variability in results can occur due to "
+        "differences in standard lactation curves; therefore, complete agreement is not realistic.\n\n"
+        "The calculation of the organization is evaluated using four different metrics: R², root mean squared error (RMSE), "
+        "mean absolute error (MAE), and mean absolute percentage error (MAPE). The results are presented in a table with "
+        "two rows: the first compares the organization's calculation with the reference calculation, and the second compares "
+        "the organization's calculation with the actual cumulative milk yield.\n\n"
+        "To analyze the results further, the calculation is also evaluated by parity, using only the milk recordings of "
+        "cows in each category and applying the same evaluation metrics."
+    )
+    pdf.multi_cell(0, 6, intro_text)
     pdf.ln(6)
 
-    pdf.set_font("Arial", '', 11)
-    pdf.set_text_color(0, 0, 0)
-    pdf.multi_cell(0, 8,
-        f"Name of Organization: {details['organization']}\n"
-        f"Date Reported on: {details['date_reported']}\n"
-        f"Report Requested By: {user_name.title()}\n"
-        f"Method of Calculation Applied: {details['calculation_method']}\n"
-        f"Test Set ID: {details['test_set_id']}\n"
-        f"Country: {details['country']}\n"
-    )
-    pdf.ln(4)
-
     # ===== TABLE STRUCTURE =====
-    col_widths = [50, 28, 28, 28, 50]
+    # Make each column with the same width
+    col_widths = [38, 38, 38, 38, 38]
     headers = ["Comparison", "R²", "RMSE", "MAE", "MAPE"]
 
     def draw_metrics_table(section_name, primary_metrics, icar_metrics):
-        """Draws a 2-row metrics table."""
-        pdf.set_font("Arial", 'B', 12)
+        """Draws a 2-row metrics table with professional styling."""
+        # Section header with better styling
+        pdf.set_font("Arial", 'B', 13)
         pdf.set_fill_color(201, 227, 242)
         pdf.set_text_color(0, 0, 128)
-        pdf.cell(190, 8, section_name, ln=True, fill=True)
-        pdf.ln(3)
+        pdf.cell(190, 9, section_name, ln=True, fill=True)
+        pdf.ln(4)
 
+        # Table header with bold styling
+        pdf.set_font("Arial", 'B', 10)
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_fill_color(0, 109, 132)
+        for h, w in zip(headers, col_widths):
+            pdf.cell(w, 9, h, 1, 0, 'C', fill=True)
+        pdf.ln()
+
+        # Row 1 — Reference Calculation (RCALY)
         pdf.set_font("Arial", 'B', 10)
         pdf.set_text_color(0, 0, 0)
-        for h, w in zip(headers, col_widths):
-            pdf.cell(w, 8, h, 1, 0, 'C')
-        pdf.ln()
-
-        # Row 1 — Reference Calculation
+        pdf.set_fill_color(245, 245, 245)
+        pdf.cell(col_widths[0], 9, "RCALY", 1, 0, 'L', fill=True)
         pdf.set_font("Arial", '', 10)
-        pdf.cell(col_widths[0], 8, "RCALY", 1)
-        pdf.cell(col_widths[1], 8, f"{primary_metrics['pearson_correlation']:.3f}", 1, 0, 'C')
-        pdf.cell(col_widths[2], 8, f"{primary_metrics['root_mean_squared_error']:.2f}", 1, 0, 'C')
-        pdf.cell(col_widths[3], 8, f"{primary_metrics['mean_absolute_error']:.2f}", 1, 0, 'C')
-        pdf.cell(col_widths[4], 8, f"{primary_metrics['mean_absolute_percentage_error']:.2f}%", 1, 0, 'C')
+        pdf.set_fill_color(255, 255, 255)
+        pdf.cell(col_widths[1], 9, f"{primary_metrics['pearson_correlation']:.3f}", 1, 0, 'C', fill=True)
+        pdf.cell(col_widths[2], 9, f"{primary_metrics['root_mean_squared_error']:.2f}", 1, 0, 'C', fill=True)
+        pdf.cell(col_widths[3], 9, f"{primary_metrics['mean_absolute_error']:.2f}", 1, 0, 'C', fill=True)
+        pdf.cell(col_widths[4], 9, f"{primary_metrics['mean_absolute_percentage_error']:.2f}%", 1, 0, 'C', fill=True)
         pdf.ln()
 
-        # Row 2 — Actual Accumulated (ICAR)
+        # Row 2 — Actual Accumulated (ALY)
         pdf.set_fill_color(0, 109, 132)
         pdf.set_text_color(255, 255, 255)
         pdf.set_font("Arial", 'B', 10)
-        pdf.cell(col_widths[0], 8, "ALY", 1, fill=True)
+        pdf.cell(col_widths[0], 9, "ALY", 1, 0, 'L', fill=True)
         pdf.set_font("Arial", '', 10)
+        pdf.set_fill_color(230, 240, 245)
         pdf.set_text_color(0, 0, 0)
-        pdf.cell(col_widths[1], 8, f"{icar_metrics['pearson_correlation']:.3f}", 1, 0, 'C')
-        pdf.cell(col_widths[2], 8, f"{icar_metrics['root_mean_squared_error']:.2f}", 1, 0, 'C')
-        pdf.cell(col_widths[3], 8, f"{icar_metrics['mean_absolute_error']:.2f}", 1, 0, 'C')
-        pdf.cell(col_widths[4], 8, f"{icar_metrics['mean_absolute_percentage_error']:.2f}%", 1, 0, 'C')
-        pdf.ln(10)
+        pdf.cell(col_widths[1], 9, f"{icar_metrics['pearson_correlation']:.3f}", 1, 0, 'C', fill=True)
+        pdf.cell(col_widths[2], 9, f"{icar_metrics['root_mean_squared_error']:.2f}", 1, 0, 'C', fill=True)
+        pdf.cell(col_widths[3], 9, f"{icar_metrics['mean_absolute_error']:.2f}", 1, 0, 'C', fill=True)
+        pdf.cell(col_widths[4], 9, f"{icar_metrics['mean_absolute_percentage_error']:.2f}%", 1, 0, 'C', fill=True)
+        pdf.ln(12)
 
-    def plot_and_add_to_pdf(x_vals, y_vals, title, xlabel, ylabel, color):
-        """Generate scatter plot and insert neatly into PDF."""
-        fig, ax = plt.subplots(figsize=(4.6, 2.5))
-        ax.scatter(x_vals, y_vals, s=18, alpha=0.7, color=color, edgecolors="none")
-        ax.set_title(title, fontsize=9)
-        ax.set_xlabel(xlabel, fontsize=8)
-        ax.set_ylabel(ylabel, fontsize=8)
-        ax.tick_params(axis='both', labelsize=7)
-        ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.6)
+    def plot_and_add_to_pdf(x_vals, y_vals, title, xlabel, ylabel, color, add_45_line=False):
+        """Generate scatter plot and insert neatly into PDF with better styling."""
+        fig, ax = plt.subplots(figsize=(5, 3))
+        ax.scatter(x_vals, y_vals, s=20, alpha=0.6, color=color, edgecolors="white", linewidth=0.3)
+        
+        # Add 45-degree line with high transparency if requested
+        if add_45_line:
+            min_val = min(min(x_vals), min(y_vals))
+            max_val = max(max(x_vals), max(y_vals))
+            ax.plot([min_val, max_val], [min_val, max_val], 'k--', alpha=0.25, linewidth=1.2)
+        
+        ax.set_title(title, fontsize=10, fontweight='bold', pad=10)
+        ax.set_xlabel(xlabel, fontsize=9, fontweight='bold')
+        ax.set_ylabel(ylabel, fontsize=9, fontweight='bold')
+        ax.tick_params(axis='both', labelsize=8)
+        ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.5, color='gray')
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
         plt.tight_layout()
         buf = BytesIO()
-        plt.savefig(buf, format="PNG", dpi=130, bbox_inches="tight")
+        plt.savefig(buf, format="PNG", dpi=150, bbox_inches="tight", facecolor='white')
         plt.close()
         buf.seek(0)
         img_path = f"/tmp/temp_plot_{np.random.randint(100000)}.png"
@@ -172,9 +277,9 @@ def generate_comparison_pdf(details, metrics, user_name, generate_obj, submissio
             f.write(buf.getvalue())
         if pdf.get_y() > 160:
             pdf.add_page()
-        pdf.image(img_path, x=20, w=165)
+        pdf.image(img_path, x=15, w=180)
         os.remove(img_path)
-        pdf.ln(10)
+        pdf.ln(8)
 
     # ===== Overall Section =====
     ref = metrics['reference_yields']
@@ -184,22 +289,28 @@ def generate_comparison_pdf(details, metrics, user_name, generate_obj, submissio
 
     draw_metrics_table("Calculation Evaluation and Comparison", metrics, icar_metrics)
 
-    # Add Abbreviations Section
-    pdf.set_font("Arial", 'I', 8)
-    pdf.set_text_color(80, 80, 80)
+    # Add Abbreviations Section with better styling
+    pdf.set_font("Arial", 'B', 9)
+    pdf.set_text_color(0, 0, 128)
+    pdf.cell(0, 6, "Abbreviations Used:", ln=True)
+    pdf.ln(2)
+    pdf.set_font("Arial", '', 9)
+    pdf.set_text_color(60, 60, 60)
     pdf.multi_cell(0, 5,
-        "Abbreviations Used:\n"
         "RCALY - Reference Calculated Accumulated Lactation Yield\n"
-        "SCALY - Submitted Calculated Accumulated Lactation Yield"
+        "SCALY - Submitted Calculated Accumulated Lactation Yield\n"
         "ALY - Actual Accumulated Lactation Yield"
     )
-    pdf.ln(2)
+    pdf.ln(6)
     pdf.set_text_color(0, 0, 0)
 
     # Overall scatter plots
-    plot_and_add_to_pdf(ref, actual, "Overall Scatter Plot: RCALY vs SCALY", "Reference (RCALY)", "Submitted (SCALY)", "#1f77b4")
+    plot_and_add_to_pdf(ref, actual, 
+                        "Calculation of organization versus the ICAR reference calculation", 
+                        "RCALY (kg milk)", "SCALY (kg milk)", "#1f77b4", add_45_line=True)
     plot_and_add_to_pdf(icar_ref, submission_obj.calculated_milk_yields,
-                        "Overall Scatter Plot: Actual vs SCALY", "Actual Accum. Lactation Yields (kg)", "Submitted (SCALY)", "#ff7f0e")
+                        "Calculation of organization versus actual 305 milk yield", 
+                        "ALY (kg milk)", "SCALY (kg milk)", "#ff7f0e", add_45_line=True)
 
     # ===== Parity-specific Sections =====
     parity_list = generate_obj.parity
@@ -224,7 +335,19 @@ def generate_comparison_pdf(details, metrics, user_name, generate_obj, submissio
             if icar_val is not None:
                 parity_to_icar.setdefault(group_label, []).append(icar_val)
 
-    # We’ll iterate only over Parity 1, 2, and 3+ (if they exist)
+    # ===== Parity-specific Sections with Header =====
+    # Add main header: "Calculation evaluation per parity"
+    if any(p in parity_to_ref for p in ["1", "2", "3+"]):
+        if pdf.get_y() > 180:
+            pdf.add_page()
+        
+        pdf.set_font("Arial", 'B', 13)
+        pdf.set_fill_color(201, 227, 242)
+        pdf.set_text_color(0, 0, 128)
+        pdf.cell(190, 9, "Calculation Evaluation per Parity", ln=True, fill=True)
+        pdf.ln(6)
+    
+    # We'll iterate only over Parity 1, 2, and 3+ (if they exist)
     for p in ["1", "2", "3+"]:
         if p not in parity_to_ref:
             continue
@@ -238,30 +361,63 @@ def generate_comparison_pdf(details, metrics, user_name, generate_obj, submissio
         parity_metrics = safe_calculate_metrics(ref_vals, act_vals)
         parity_icar_metrics = safe_calculate_metrics(icar_vals, act_vals)
 
+        # Smaller subheader for each parity
         draw_metrics_table(f"Parity {p} Performance", parity_metrics, parity_icar_metrics)
-        plot_and_add_to_pdf(ref_vals, act_vals, f"Parity {p} Scatter: RCALY vs SCALY", "Reference (RCALY)", "Submitted (SCALY)", "#1f77b4")
-        plot_and_add_to_pdf(icar_vals, act_vals, f"Parity {p} Scatter: Actual vs SCALY", "Actual Accum. Lactation Yields (kg)", "Submitted (SCALY)", "#ff7f0e")
+        plot_and_add_to_pdf(ref_vals, act_vals, 
+                          f"Parity {p} Scatter: RCALY vs SCALY", 
+                          "RCALY (kg milk)", "SCALY (kg milk)", "#1f77b4", add_45_line=True)
+        plot_and_add_to_pdf(icar_vals, act_vals, 
+                          f"Parity {p} Scatter: Actual vs SCALY", 
+                          "ALY (kg milk)", "SCALY (kg milk)", "#ff7f0e", add_45_line=True)
 
     # ===== Appendix =====
     if pdf.get_y() > 180:
         pdf.add_page()
 
-    pdf.set_font("Arial", 'B', 12)
+    pdf.set_font("Arial", 'B', 13)
     pdf.set_fill_color(201, 227, 242)
     pdf.set_text_color(0, 0, 128)
-    pdf.cell(190, 8, "Appendix", ln=True, fill=True)
-    pdf.ln(3)
+    pdf.cell(190, 9, "Appendix", ln=True, fill=True)
+    pdf.ln(5)
 
     pdf.set_text_color(0, 0, 0)
-    pdf.set_font("Arial", '', 10)
-    pdf.multi_cell(0, 6, "Data set we gave them + result that they gave back")
-    pdf.ln(2)
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 7, "Data set we gave them + result that they gave back", ln=True)
+    pdf.ln(4)
 
+    # Download links with better styling
     if 'dataset_link' in details:
         pdf.set_text_color(0, 0, 255)
         pdf.set_font("Arial", 'U', 10)
-        pdf.cell(0, 8, "Download Dataset Used", ln=True,
+        pdf.cell(0, 8, "Download TestSet used for the calculation", ln=True,
                  link='http://localhost:5000/' + details['dataset_link'])
+        pdf.ln(4)
+    
+    # Disclaimer with better styling
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(0, 7, "Disclaimer", ln=True)
+    pdf.ln(2)
+    pdf.set_font("Arial", '', 9)
+    pdf.set_text_color(60, 60, 60)
+    pdf.multi_cell(0, 5, 
+        "All submitted data will be collected for research purposes by the Cornell Bovi-Analytics lab. "
+        "Any publications based on this data will be fully anonymized."
+    )
+    pdf.ln(6)
+    
+    # Contact information with better styling
+    pdf.set_font("Arial", 'B', 10)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(0, 7, "Contact Information", ln=True)
+    pdf.ln(2)
+    pdf.set_font("Arial", '', 9)
+    pdf.set_text_color(60, 60, 60)
+    pdf.multi_cell(0, 5,
+        "For questions or support, contact: mbv32@cornell.edu\n\n"
+        "Interested in what the Bovi-Analytics lab is doing? "
+        "See https://bovi-analytics.org/ and https://www.linkedin.com/company/bovi-analytics/"
+    )
 
     pdf_bytes = pdf.output(dest='S').encode('latin-1')
     return BytesIO(pdf_bytes)
@@ -395,7 +551,12 @@ def submit_data():
         generate = storage.get(Generate, test_set_id)
         if not generate:
             print("Test set ID not found:", test_set_id)
-            return "Test set ID not found", 404
+            return jsonify({
+                "success": False,
+                "message": "Test set ID not found",
+                "error": "TEST_SET_NOT_FOUND",
+                "test_set_id": test_set_id
+            }), 404
         
         generate_download_link = generate.download_url
         

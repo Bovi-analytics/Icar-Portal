@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import { FiMenu, FiX } from "react-icons/fi";
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
+import { FiMenu, FiX, FiDatabase, FiUpload, FiBarChart2, FiUser, FiShield, FiTrendingUp } from "react-icons/fi";
 import Landing from "./pages/Landing";
 import Generate from "./pages/Generate";
 import Submit from "./pages/Submit";
@@ -71,112 +71,18 @@ export default function App() {
   return (
     <Router>
       <div className="app-container">
-        <nav className="navbar">
-          {/* ===== Left side (Logo + menu toggle) ===== */}
-          <div className="navbar-left">
-            <Link to="/" className="navbar-logo">
-              <img src="/Bovi-Analytics-Transparent.png" alt="Bovi Analytics Logo" className="navbar-logo-img" />
-            </Link>
-
-            <button
-              className="hamburger"
-              onClick={toggleMenu}
-              aria-label="Toggle navigation"
-            >
-              {isNavOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-            </button>
-          </div>
-
-          {/* ===== Middle nav links ===== */}
-          <ul className={`nav-links ${isNavOpen ? "nav-open" : ""}`}>
-            {userRoles.includes("admin") && (
-              <>
-                <li>
-                  <Link to="/admin" onClick={closeMenu}>
-                    Admin Page
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/analytics" onClick={closeMenu}>
-                    Analytics
-                  </Link>
-                </li>
-              </>
-            )}
-            <li>
-              <Link to="/generate" onClick={closeMenu}>
-                Generate
-              </Link>
-            </li>
-            <li>
-              <Link to="/submit" onClick={closeMenu}>
-                Submit
-              </Link>
-            </li>
-            <li>
-              <Link to="/dashboard" onClick={closeMenu}>
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link to="/profile" onClick={closeMenu}>
-                Profile
-              </Link>
-            </li>
-          </ul>
-
-          {/* ===== Right side (Auth buttons / profile) ===== */}
-          <div className="auth-section">
-            {!isAuthenticated ? (
-              <>
-                <button
-                  className="auth-btn signup"
-                  onClick={() => loginWithRedirect({ screen_hint: "signup" })}
-                >
-                  Sign Up
-                </button>
-                <button
-                  className="auth-btn signin"
-                  onClick={() => loginWithRedirect()}
-                >
-                  Sign In
-                </button>
-              </>
-            ) : (
-              <div className="profile-area">
-                <span className="welcome-text">
-                  Hi, {titleCase(getDisplayName(user))}
-                </span>
-                <button
-                  className="logout-btn"
-                  onClick={() =>
-                    logout({ logoutParams: { returnTo: window.location.origin } })
-                  }
-                >
-                  Logout
-                </button>
-                {user?.picture ? (
-                  <Link to="/profile" onClick={closeMenu} className="profile-pic-link">
-                    <img
-                      src={user.picture}
-                      alt="Profile"
-                      className="profile-pic"
-                      title={getDisplayName(user)}
-                    />
-                  </Link>
-                ) : (
-                  <Link to="/profile" onClick={closeMenu} className="profile-pic-link">
-                    <div className="profile-fallback" title={getDisplayName(user)}>
-                      {getDisplayName(user)?.charAt(0).toUpperCase()}
-                    </div>
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
-        </nav>
-
-        {/* ===== Main content ===== */}
+        <NavBarContent 
+          isNavOpen={isNavOpen}
+          toggleMenu={toggleMenu}
+          closeMenu={closeMenu}
+          userRoles={userRoles}
+          isAuthenticated={isAuthenticated}
+          user={user}
+          loginWithRedirect={loginWithRedirect}
+          logout={logout}
+          titleCase={titleCase}
+          getDisplayName={getDisplayName}
+        />
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Landing />} />
@@ -190,6 +96,157 @@ export default function App() {
         </main>
       </div>
     </Router>
+  );
+}
+
+// Separate component for navbar that can use useLocation
+function NavBarContent({ 
+  isNavOpen, 
+  toggleMenu, 
+  closeMenu, 
+  userRoles, 
+  isAuthenticated, 
+  user, 
+  loginWithRedirect, 
+  logout, 
+  titleCase, 
+  getDisplayName 
+}) {
+  const location = useLocation();
+  
+  const NavLink = ({ to, onClick, icon, children }) => {
+    const isActive = location.pathname === to;
+    
+    return (
+      <Link 
+        to={to} 
+        onClick={onClick}
+        className={`nav-link ${isActive ? 'active' : ''}`}
+      >
+        <span className="nav-icon">{icon}</span>
+        <span className="nav-text">{children}</span>
+      </Link>
+    );
+  };
+
+  return (
+    <nav className="navbar">
+      {/* ===== Left side (Logo + menu toggle) ===== */}
+      <div className="navbar-left">
+        <Link to="/" className="navbar-logo">
+          <img src="/Bovi-Analytics-Transparent.png" alt="Bovi Analytics Logo" className="navbar-logo-img" />
+        </Link>
+
+        <button
+          className="hamburger"
+          onClick={toggleMenu}
+          aria-label="Toggle navigation"
+        >
+          {isNavOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+        </button>
+      </div>
+
+      {/* ===== Middle nav links ===== */}
+      <ul className={`nav-links ${isNavOpen ? "nav-open" : ""}`}>
+        {userRoles.includes("admin") && (
+          <>
+            <li>
+              <NavLink to="/admin" onClick={closeMenu} icon={<FiShield />}>
+                Admin
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/analytics" onClick={closeMenu} icon={<FiTrendingUp />}>
+                Analytics
+              </NavLink>
+            </li>
+          </>
+        )}
+        <li>
+          <NavLink to="/generate" onClick={closeMenu} icon={<FiDatabase />}>
+            Generate
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/submit" onClick={closeMenu} icon={<FiUpload />}>
+            Submit
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/dashboard" onClick={closeMenu} icon={<FiBarChart2 />}>
+            Dashboard
+          </NavLink>
+        </li>
+        <li>
+          <NavLink to="/profile" onClick={closeMenu} icon={<FiUser />}>
+            Profile
+          </NavLink>
+        </li>
+      </ul>
+
+      {/* ===== Right side (Auth buttons / profile) ===== */}
+      <div className="auth-section">
+        {!isAuthenticated ? (
+          <div className="auth-buttons">
+            <button
+              className="auth-btn signin-btn"
+              onClick={() => loginWithRedirect()}
+            >
+              Sign In
+            </button>
+            <button
+              className="auth-btn signup-btn"
+              onClick={() => loginWithRedirect({ screen_hint: "signup" })}
+            >
+              Sign Up
+            </button>
+          </div>
+        ) : (
+          <div className="profile-area">
+            <div className="user-greeting">
+              <span className="welcome-text">
+                Hi, <strong>{titleCase(getDisplayName(user))}</strong>
+              </span>
+            </div>
+            {user?.picture ? (
+              <Link to="/profile" onClick={closeMenu} className="profile-pic-link">
+                <img
+                  src={user.picture}
+                  alt="Profile"
+                  className="profile-pic"
+                  title={getDisplayName(user)}
+                />
+                {userRoles.includes("admin") && (
+                  <div className="admin-crown" title="Administrator">
+                    <FiShield />
+                  </div>
+                )}
+              </Link>
+            ) : (
+              <Link to="/profile" onClick={closeMenu} className="profile-pic-link">
+                <div className="profile-fallback" title={getDisplayName(user)}>
+                  {getDisplayName(user)?.charAt(0).toUpperCase()}
+                </div>
+                {userRoles.includes("admin") && (
+                  <div className="admin-crown" title="Administrator">
+                    <FiShield />
+                  </div>
+                )}
+              </Link>
+            )}
+            <button
+              className="logout-btn"
+              onClick={() =>
+                logout({ logoutParams: { returnTo: window.location.origin } })
+              }
+              title="Logout"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
+    </nav>
   );
 }
 

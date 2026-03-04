@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../styles/Profile.css";
 import { useAuth0 } from "@auth0/auth0-react";
+import { FaUser, FaEnvelope, FaBuilding, FaEdit, FaSave, FaCheckCircle } from "react-icons/fa";
 
 export default function Profile() {
   const { user, isAuthenticated, isLoading, getAccessTokenSilently } = useAuth0();
@@ -10,6 +11,7 @@ export default function Profile() {
   const [editMode, setEditMode] = useState(false);
   const [organization, setOrganization] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   // Get display name: use name if available, otherwise use email without @domain
   const getDisplayName = (user) => {
@@ -99,8 +101,11 @@ export default function Profile() {
       setProfile(profileData);
       setOrganization(profileData.organization);
       setError(""); // Clear errors on success
+      setSuccess(true);
       // Exit edit mode after successful save to show the updated value
       setEditMode(false);
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       console.error("Error saving organization:", err);
       setError(err.message || "Error updating organization. Try again.");
@@ -110,60 +115,154 @@ export default function Profile() {
     }
   };
 
-  if (isLoading || loading) return <p className="profile-status">Loading profile...</p>;
+  if (isLoading || loading) {
+    return (
+      <div className="profile-container">
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated)
     return (
       <div className="profile-container">
         <h2>User Profile</h2>
-        <p className="profile-status">Please log in to view your profile.</p>
+        <div className="empty-state">
+          <div className="empty-icon">👤</div>
+          <p className="profile-status">Please log in to view your profile.</p>
+        </div>
       </div>
     );
 
   return (
     <div className="profile-container">
-      <h2>Your Profile</h2>
+      <div className="profile-header">
+        <h2>Your Profile</h2>
+        <p className="profile-subtitle">Manage your account information</p>
+      </div>
+
       <div className="profile-card">
-        {user.picture && (
-          <img src={user.picture} alt={user.name} className="profile-avatar" />
-        )}
-
-        <p>
-          <strong>Name:</strong> {getDisplayName(user)}
-        </p>
-        <p>
-          <strong>Email:</strong> {user.email}
-        </p>
-
-        <p>
-          <strong>Organization:</strong>{" "}
-          {editMode ? (
-            <input
-              type="text"
-              value={organization}
-              onChange={(e) => setOrganization(e.target.value)}
-              placeholder="Enter organization"
-            />
+        <div className="avatar-section">
+          {user.picture ? (
+            <img src={user.picture} alt={user.name} className="profile-avatar" />
           ) : (
-            profile?.organization || "N/A"
+            <div className="profile-avatar-placeholder">
+              <FaUser size={40} />
+            </div>
           )}
-        </p>
+          <div className="avatar-badge">
+            <span>{getDisplayName(user).charAt(0).toUpperCase()}</span>
+          </div>
+        </div>
 
-        {editMode ? (
-          <button 
-            className="save-btn" 
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? "Saving..." : "Save"}
-          </button>
-        ) : (
-          <button className="edit-btn" onClick={() => setEditMode(true)}>
-            Edit Organization
-          </button>
+        <div className="profile-info">
+          <div className="info-row">
+            <div className="info-icon-wrapper">
+              <FaUser className="info-icon" />
+            </div>
+            <div className="info-content">
+              <span className="info-label">Name</span>
+              <span className="info-value">{getDisplayName(user)}</span>
+            </div>
+          </div>
+
+          <div className="info-row">
+            <div className="info-icon-wrapper">
+              <FaEnvelope className="info-icon" />
+            </div>
+            <div className="info-content">
+              <span className="info-label">Email</span>
+              <span className="info-value">{user.email}</span>
+            </div>
+          </div>
+
+          <div className="info-row">
+            <div className="info-icon-wrapper">
+              <FaBuilding className="info-icon" />
+            </div>
+            <div className="info-content">
+              <span className="info-label">Organization</span>
+              {editMode ? (
+                <input
+                  type="text"
+                  value={organization}
+                  onChange={(e) => setOrganization(e.target.value)}
+                  placeholder="Enter organization name"
+                  className="organization-input"
+                  autoFocus
+                />
+              ) : (
+                <span className="info-value">
+                  {profile?.organization || <span className="no-value">Not set</span>}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="profile-actions">
+          {editMode ? (
+            <div className="action-buttons">
+              <button 
+                className="action-btn cancel-btn" 
+                onClick={() => {
+                  setEditMode(false);
+                  setOrganization(profile?.organization || "");
+                  setError("");
+                }}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button 
+                className="action-btn save-btn" 
+                onClick={handleSave}
+                disabled={saving || !organization.trim()}
+              >
+                {saving ? (
+                  <>
+                    <div className="btn-spinner"></div>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <FaSave />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            <button 
+              className="action-btn edit-btn" 
+              onClick={() => {
+                setEditMode(true);
+                setError("");
+                setSuccess(false);
+              }}
+            >
+              <FaEdit />
+              <span>Edit Organization</span>
+            </button>
+          )}
+        </div>
+
+        {success && (
+          <div className="success-message">
+            <FaCheckCircle />
+            <span>Organization updated successfully!</span>
+          </div>
         )}
 
-        {error && <p className="profile-error">{error}</p>}
+        {error && (
+          <div className="error-message">
+            <span>⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
       </div>
     </div>
   );

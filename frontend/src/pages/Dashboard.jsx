@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "../styles/Dashboard.css";
-import { FaTrashAlt } from "react-icons/fa";
+import { FaTrashAlt, FaDownload, FaFilePdf, FaBuilding, FaUser, FaFlask, FaGlobe, FaCalendarAlt, FaStickyNote } from "react-icons/fa";
 import { useAuth0 } from "@auth0/auth0-react";
 // import { jwtDecode } from "jwt-decode";
 
@@ -155,12 +155,22 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-container">
-      <p>You are viewing all submissions. Signed in as: {user?.email}</p>
+      <div className="dashboard-header">
+        <h2>My Submissions</h2>
+        <p className="user-info">Signed in as: {user?.email}</p>
+      </div>
 
       {loading ? (
-        <p>Loading submissions...</p>
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Loading submissions...</p>
+        </div>
       ) : submissions.length === 0 ? (
-        <p>No submissions found.</p>
+        <div className="empty-state">
+          <div className="empty-icon">📊</div>
+          <h3>No submissions yet</h3>
+          <p>Start by generating a test dataset and submitting your results.</p>
+        </div>
       ) : (
         <div className="card-grid">
           {submissions.map((item, index) => (
@@ -173,38 +183,99 @@ export default function Dashboard() {
                 <FaTrashAlt size={14} />
               </button>
 
-              <h3>TestSet ID: {item.test_set_id}</h3>
-              <p><strong>Organization:</strong> {item.organization}</p>
-              <p><strong>Name:</strong> {item.name}</p>
-              <p><strong>Method:</strong> {item.calculation_method || "—"}</p>
-              <p><strong>Country:</strong> {item.country || "—"}</p>
-              <p><strong>Date:</strong> {new Date(item.date).toLocaleDateString()}</p>
-              <p><strong>Notes:</strong> {item.notes}</p>
+              <div className="card-header">
+                <div className="test-id-badge">
+                  <span className="badge-label">Test Set ID</span>
+                  <code className="test-id-value">{item.test_set_id}</code>
+                </div>
+              </div>
 
-              <a
-                href={`${process.env.REACT_APP_BASE_API_URL}${item.download_url}`}
-                download
-                // className="download-link"
-              >
-                Download Test Data
-              </a>
+              <div className="card-body">
+                <div className="info-row">
+                  <FaBuilding className="info-icon" />
+                  <div className="info-content">
+                    <span className="info-label">Organization</span>
+                    <span className="info-value">{item.organization || "—"}</span>
+                  </div>
+                </div>
 
-              <button 
-                className="view-button" 
-                onClick={() => handleCompare(item.id)}
-                disabled={comparing[item.id]}
-              >
-                {comparing[item.id] ? "Loading..." : "View Comparison"}
-              </button>
+                <div className="info-row">
+                  <FaUser className="info-icon" />
+                  <div className="info-content">
+                    <span className="info-label">Name</span>
+                    <span className="info-value">{item.name || "—"}</span>
+                  </div>
+                </div>
+
+                <div className="info-row">
+                  <FaFlask className="info-icon" />
+                  <div className="info-content">
+                    <span className="info-label">Method</span>
+                    <span className="info-value">{item.calculation_method || "—"}</span>
+                  </div>
+                </div>
+
+                <div className="info-row">
+                  <FaGlobe className="info-icon" />
+                  <div className="info-content">
+                    <span className="info-label">Country</span>
+                    <span className="info-value">{item.country || "—"}</span>
+                  </div>
+                </div>
+
+                <div className="info-row">
+                  <FaCalendarAlt className="info-icon" />
+                  <div className="info-content">
+                    <span className="info-label">Date</span>
+                    <span className="info-value">{new Date(item.date).toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                {item.notes && (
+                  <div className="info-row notes-row">
+                    <FaStickyNote className="info-icon" />
+                    <div className="info-content">
+                      <span className="info-label">Notes</span>
+                      <span className="info-value notes-text">{item.notes}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="card-actions">
+                <a
+                  href={`${process.env.REACT_APP_BASE_API_URL}${item.download_url}`}
+                  download
+                  className="action-btn download-btn"
+                >
+                  <FaDownload />
+                  <span>Download Data</span>
+                </a>
+
+                <button 
+                  className="action-btn view-btn" 
+                  onClick={() => handleCompare(item.id)}
+                  disabled={comparing[item.id]}
+                >
+                  {comparing[item.id] ? (
+                    <>
+                      <div className="btn-spinner"></div>
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaFilePdf />
+                      <span>View Comparison</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
               {compareError === item.id && (
-                <p className="compare-error" style={{ 
-                  color: "#ef4444", 
-                  fontSize: "0.9rem", 
-                  marginTop: "0.5rem",
-                  textAlign: "center"
-                }}>
-                  Failed to compare. Please try again.
-                </p>
+                <div className="error-message">
+                  <span>⚠️</span>
+                  <span>Failed to generate comparison. Please try again.</span>
+                </div>
               )}
             </div>
           ))}
