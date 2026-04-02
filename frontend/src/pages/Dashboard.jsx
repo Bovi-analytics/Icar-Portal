@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../styles/Dashboard.css";
-import { FaTrashAlt, FaDownload, FaFilePdf, FaBuilding, FaUser, FaFlask, FaGlobe, FaCalendarAlt, FaStickyNote } from "react-icons/fa";
+import { FaTrashAlt, FaDownload, FaFilePdf, FaBuilding, FaUser, FaFlask, FaGlobe, FaCalendarAlt, FaStickyNote, FaChartLine } from "react-icons/fa";
+import { formatSubmissionMetrics } from "../utils/formatSubmissionMetrics";
 import { useAuth0 } from "@auth0/auth0-react";
 // import { jwtDecode } from "jwt-decode";
 
@@ -228,6 +229,14 @@ export default function Dashboard() {
                   <div className="info-content">
                     <span className="info-label">Date</span>
                     <span className="info-value">{new Date(item.date).toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                <div className="info-row">
+                  <FaChartLine className="info-icon" />
+                  <div className="info-content">
+                    <span className="info-label">vs. reference</span>
+                    <span className="info-value">{formatSubmissionMetrics(item.metrics)}</span>
                   </div>
                 </div>
 

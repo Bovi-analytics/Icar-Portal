@@ -183,8 +183,8 @@ export default function Landing() {
             <div className="footer-section">
               <h4>Learn More</h4>
               <div className="footer-links">
-                <a href="https://bovi-analytics.com/" target="_blank" rel="noreferrer">
-                  bovi-analytics.com
+                <a href="https://bovi-analytics.org/" target="_blank" rel="noreferrer">
+                  bovi-analytics.org
                 </a>
                 <a
                   href="https://www.linkedin.com/company/bovi-analytics/"

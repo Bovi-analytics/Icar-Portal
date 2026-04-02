@@ -28,26 +28,59 @@ validator = Auth0JWTBearerTokenValidator(
 require_auth.register_token_validator(validator)
 
 
-# Dataset and Azure setup
+# Dataset and Azure setup (app JSON may live in a different container/account than the reference CSV)
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 AZURE_CONTAINER_NAME = os.getenv("AZURE_CONTAINER_NAME")
-BLOB_DATASET_NAME = os.getenv("FULL_DATASET_PATH", "ActualMilkYields.csv")  # 👈 your blob dataset file name
+AZURE_DATASET_STORAGE_CONNECTION_STRING = os.getenv("AZURE_DATASET_STORAGE_CONNECTION_STRING")
+AZURE_DATASET_CONTAINER_NAME = os.getenv("AZURE_DATASET_CONTAINER_NAME", "icarwebsite")
+# FULL_DATASET_PATH is the blob filename only (no "/"); it is stored under dataset/ in the container.
+_dataset_filename = os.getenv("FULL_DATASET_PATH", "ActualMilkYields.csv").lstrip("/")
+DATASET_BLOB_PATH = os.getenv("AZURE_DATASET_BLOB_PATH") or f"dataset/{_dataset_filename}"
 
+
+
+def safe_calculate_metrics(true_vals, pred_vals):
+    import numpy as np
+    from sklearn.metrics import mean_absolute_error, mean_squared_error
+    from scipy.stats import pearsonr
+
+    """Return metrics safely even if dataset is small."""
+    true = np.array(true_vals, dtype=float)
+    pred = np.array(pred_vals, dtype=float)
+    mask = ~np.isnan(true) & ~np.isnan(pred)
+    true, pred = true[mask], pred[mask]
+    if len(true) < 2:
+        return {k: 0 for k in ["pearson_correlation","root_mean_squared_error","mean_absolute_error","mean_absolute_percentage_error"]}
+    pearson_corr, _ = pearsonr(true, pred)
+    mae = mean_absolute_error(true, pred)
+    mape = np.mean(np.abs((true - pred) / true)) * 100
+    rmse = np.sqrt(mean_squared_error(true, pred))
+    return {
+        "pearson_correlation": pearson_corr,
+        "root_mean_squared_error": rmse,
+        "mean_absolute_error": mae,
+        "mean_absolute_percentage_error": mape
+    }
 
 # ======================================================
 # NEW FUNCTION: Load ActualMilkYields.csv from Azure Blob
 # ======================================================
 def load_csv_from_blob():
-    """Downloads ActualMilkYields.csv from Azure Blob Storage into a pandas DataFrame."""
-    blob_service = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
-    container_client = blob_service.get_container_client(AZURE_CONTAINER_NAME)
-    blob_client = container_client.get_blob_client(BLOB_DATASET_NAME)
-
-    download_stream = blob_client.download_blob()
-    csv_bytes = download_stream.readall()
-
-    df = pd.read_csv(BytesIO(csv_bytes))
-    return df
+    """Load reference CSV from blob. FULL_DATASET_PATH is filename only; blob key is dataset/<filename>."""
+    conn = AZURE_DATASET_STORAGE_CONNECTION_STRING or AZURE_STORAGE_CONNECTION_STRING
+    if not conn:
+        raise ValueError(
+            "AZURE_STORAGE_CONNECTION_STRING or AZURE_DATASET_STORAGE_CONNECTION_STRING must be set"
+        )
+    blob_service = BlobServiceClient.from_connection_string(conn)
+    container_client = blob_service.get_container_client(AZURE_DATASET_CONTAINER_NAME)
+    blob_client = container_client.get_blob_client(DATASET_BLOB_PATH)
+    if not blob_client.exists():
+        raise FileNotFoundError(
+            f"Dataset blob not found: {AZURE_DATASET_CONTAINER_NAME}/{DATASET_BLOB_PATH}"
+        )
+    csv_bytes = blob_client.download_blob().readall()
+    return pd.read_csv(BytesIO(csv_bytes))
 
 def generate_comparison_pdf(details, metrics, user_name, generate_obj, submission_obj):
     import numpy as np
@@ -442,18 +475,34 @@ def calculate_metrics(true: list, pred: list) -> dict:
     import numpy as np
 
 
-    # convert the lists to numpy arrays
-    true = np.array(true)
-    pred = np.array(pred)
+    # convert to float arrays and drop invalid pairs
+    true = np.array(true, dtype=float)
+    pred = np.array(pred, dtype=float)
+    mask = ~np.isnan(true) & ~np.isnan(pred)
+    true, pred = true[mask], pred[mask]
+    if len(true) < 2:
+        return {
+            "pearson_correlation": 0.0,
+            "mean_absolute_error": 0.0,
+            "mean_absolute_percentage_error": 0.0,
+            "root_mean_squared_error": 0.0
+        }
 
-    # Pearson Correlation Coefficient
-    pearson_corr, _ = pearsonr(true, pred)
+    # Pearson is undefined for constant arrays; avoid scipy warning
+    if np.all(true == true[0]) or np.all(pred == pred[0]):
+        pearson_corr = 0.0
+    else:
+        pearson_corr, _ = pearsonr(true, pred)
 
     # Mean Absolute Error
     mae = mean_absolute_error(true, pred)
 
     # Mean Absolute Percentage Error
-    mape = np.mean(np.abs((true - pred) / true)) * 100
+    # Avoid division-by-zero when true contains zeros
+    safe_true = np.where(true == 0, np.nan, true)
+    mape = np.nanmean(np.abs((true - pred) / safe_true)) * 100
+    if np.isnan(mape):
+        mape = 0.0
 
     # Root Mean Squared Error
     rmse = np.sqrt(mean_squared_error(true, pred))
@@ -464,6 +513,41 @@ def calculate_metrics(true: list, pred: list) -> dict:
         "mean_absolute_percentage_error": mape,
         "root_mean_squared_error": rmse
     }
+
+
+def _aligned_yields(generate_obj, submission_obj):
+    """
+    Align generate/submission yields by shared TestId.
+    Returns (internal_yields, external_yields) in matching order.
+    """
+    gen_map = {
+        str(tid): val
+        for tid, val in zip(generate_obj.test_obj_ids or [], generate_obj.calculated_milk_yields or [])
+    }
+    sub_map = {
+        str(tid): val
+        for tid, val in zip(submission_obj.test_obj_ids or [], submission_obj.calculated_milk_yields or [])
+    }
+    common_ids = [tid for tid in sub_map.keys() if tid in gen_map]
+    internal = [gen_map[tid] for tid in common_ids]
+    external = [sub_map[tid] for tid in common_ids]
+    return internal, external
+
+
+def _metrics_payload_for_submission(submission):
+    """ICAR reference-calculation vs submitted yields (same as /compare). JSON-serializable floats."""
+    generate_obj = storage.get(Generate, submission.generate_id)
+    if not generate_obj:
+        return None
+    internal_milk_yields, external_milk_yields = _aligned_yields(generate_obj, submission)
+    if not external_milk_yields or not internal_milk_yields:
+        return None
+    try:
+        m = calculate_metrics(internal_milk_yields, external_milk_yields)
+        return {k: float(v) for k, v in m.items()}
+    except Exception:
+        return None
+
 
 def extract_milk_yield_data_from_excel(file_stream):
     """
@@ -515,6 +599,10 @@ def submit_data():
 
         if file.filename == '':
             return jsonify({"success": False, "message": "Empty file name"}), 400
+
+        ref_df = load_csv_from_blob()
+        ref_df.columns = ref_df.columns.str.strip()
+        ref_map = dict(zip(ref_df["TestId"].astype(str), ref_df["TotalActualProduction"]))
 
         file_stream = BytesIO(file.read())
         milk_yield_dict = extract_milk_yield_data_from_excel(file_stream)
@@ -606,6 +694,8 @@ def get_submissions():
                 user = u
                 break
         
+
+
         # get the admin role from the request args
         admin_role = request.args.get("admin")
 
@@ -620,7 +710,7 @@ def get_submissions():
                     gen_user = storage.get(User, generate_obj.user_id)
                     if gen_user:
                         user_name = gen_user.name or "Unknown"
-                
+
                 submissions_list.append({
                     "id": submission.id,
                     "generate_id": submission.generate_id,
@@ -632,6 +722,7 @@ def get_submissions():
                     "country": submission.country,
                     "test_set_id": submission.generate_id,
                     "date": submission.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    "metrics": _metrics_payload_for_submission(submission),
                 })
             return jsonify(submissions_list), 200
 
@@ -644,7 +735,6 @@ def get_submissions():
             submissions_list = []
             # print("User found:", user.name, user.email)
             for submission in all_submissions.values():
-                # print("Found submission:", submission.id)
                 submissions_list.append({
                     "id": submission.id,
                     "generate_id": submission.generate_id,
@@ -656,6 +746,7 @@ def get_submissions():
                     "country": submission.country,
                     "test_set_id": submission.generate_id,
                     "date": submission.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    "metrics": _metrics_payload_for_submission(submission),
                 })
             # print(submissions_list)
             return jsonify(submissions_list), 200
@@ -678,6 +769,7 @@ def get_submissions():
                 "country": submission.country,
                 "test_set_id": submission.generate_id,
                 "date": submission.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "metrics": _metrics_payload_for_submission(submission),
             })
             # print(submissions_list)
         return jsonify(submissions_list), 200
@@ -721,11 +813,13 @@ def compare_submission(submission_id):
         if not generate:
             return jsonify({"success": False, "message": "Generate object not found"}), 404
 
-        external_milk_yields = submission.calculated_milk_yields
-        internal_milk_yields = generate.calculated_milk_yields
+        internal_milk_yields, external_milk_yields = _aligned_yields(generate, submission)
 
         if not external_milk_yields or not internal_milk_yields:
-            return jsonify({"success": False, "message": "No milk yields found for comparison"}), 400
+            return jsonify({
+                "success": False,
+                "message": "No overlapping Test IDs found between generated and submitted yields for comparison"
+            }), 400
 
         metrics = calculate_metrics(internal_milk_yields, external_milk_yields)
         metrics['reference_yields'] = internal_milk_yields

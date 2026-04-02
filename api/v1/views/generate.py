@@ -12,10 +12,9 @@ from models.generate import Generate
 from dotenv import load_dotenv
 from models.user import User
 import pandas as pd
-import numpy as np
-from scipy.interpolate import interp1d
 from authlib.integrations.flask_oauth2 import ResourceProtector
 from api.v1.views.validator import Auth0JWTBearerTokenValidator
+from lactationcurve.characteristics import test_interval_method as lc_test_interval_method
 
 
 load_dotenv()
@@ -31,11 +30,16 @@ validator = Auth0JWTBearerTokenValidator(
 require_auth.register_token_validator(validator)
 
 
-# Dataset and Azure setup
+# Dataset and Azure setup (test CSV may live in icarwebsite/dataset/ vs app JSON container)
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 AZURE_CONTAINER_NAME = os.getenv("AZURE_CONTAINER_NAME")
-# FULL_DATASET_PATH = os.getenv("FULL_DATASET_PATH", "TestDataSet.csv")
-BLOB_DATASET_NAME = os.getenv("BLOB_DATASET_NAME", "TestDataSet.csv")   # 👈 your blob dataset file name
+AZURE_DATASET_STORAGE_CONNECTION_STRING = os.getenv("AZURE_DATASET_STORAGE_CONNECTION_STRING")
+AZURE_DATASET_CONTAINER_NAME = os.getenv("AZURE_DATASET_CONTAINER_NAME", "icarwebsite")
+# BLOB_DATASET_NAME is filename only (no "/"); blob key is dataset/<filename>
+_dataset_filename = os.getenv("BLOB_DATASET_NAME", "TestDataSet.csv").lstrip("/")
+DATASET_BLOB_PATH = os.getenv("AZURE_DATASET_BLOB_PATH") or f"dataset/{_dataset_filename}"
+# Virtual folder for generated Excel blobs when storage_mode is azure
+AZURE_GENERATED_DATASETS_PREFIX = "Generated_Datasets"
 
 
 
@@ -46,67 +50,72 @@ BLOB_DATASET_NAME = os.getenv("BLOB_DATASET_NAME", "TestDataSet.csv")   # 👈 y
 # NEW FUNCTION: Load TestDataSet.csv from Azure Blob
 # ======================================================
 def load_csv_from_blob():
-    """Downloads TestDataSet.csv from Azure Blob Storage into a pandas DataFrame."""
-    blob_service = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
-    container_client = blob_service.get_container_client(AZURE_CONTAINER_NAME)
-    blob_client = container_client.get_blob_client(BLOB_DATASET_NAME)
+    """Load test CSV from blob. BLOB_DATASET_NAME is filename only; blob key is dataset/<filename>."""
+    conn = AZURE_DATASET_STORAGE_CONNECTION_STRING or AZURE_STORAGE_CONNECTION_STRING
+    if not conn:
+        raise ValueError(
+            "AZURE_STORAGE_CONNECTION_STRING or AZURE_DATASET_STORAGE_CONNECTION_STRING must be set"
+        )
+    blob_service = BlobServiceClient.from_connection_string(conn)
+    container_client = blob_service.get_container_client(AZURE_DATASET_CONTAINER_NAME)
+    blob_client = container_client.get_blob_client(DATASET_BLOB_PATH)
+    if not blob_client.exists():
+        raise FileNotFoundError(
+            f"Dataset blob not found: {AZURE_DATASET_CONTAINER_NAME}/{DATASET_BLOB_PATH}"
+        )
+    csv_bytes = blob_client.download_blob().readall()
+    return pd.read_csv(BytesIO(csv_bytes))
 
-    download_stream = blob_client.download_blob()
-    csv_bytes = download_stream.readall()
-
-    df = pd.read_csv(BytesIO(csv_bytes))
-    return df
 
 
-
-def test_interval_method(df):
+def estimate_yields_with_lactationcurve(df):
     """
-    Calculate the total 305-day milk yield using the trapezoidal rule
-    for interim days, and linear projection for start and end beyond the sampling period.
-
-    Parameters:
-        df (DataFrame): Input DataFrame with 'DaysInMilk', 'TestId', and 'DailyMilkingYield'.
-
-    Returns:
-        DataFrame: Columns TestId and Total305Yield
+    Calculate 305-day yields via the installed `lactationcurve` package and
+    normalize output to columns: TestId, Total305Yield.
     """
-    result = []
 
-    # Filter out records where Day > 305
-    df = df[df['DaysInMilk'] <= 305]
+    required_cols = ["DaysInMilk", "DailyMilkingYield", "TestId"]
+    missing = [c for c in required_cols if c not in df.columns]
+    if missing:
+        raise ValueError(f"Missing required columns for lactationcurve: {missing}")
 
-    # Iterate over each lactation
-    for lactation in df['TestId'].unique():
-        lactation_df = df[df['TestId'] == lactation].copy()
+    input_df = df[required_cols].copy()
 
-        # Sort by DaysInMilk ascending
-        lactation_df.sort_values(by='DaysInMilk', ascending=True, inplace=True)
+    result_df = lc_test_interval_method(
+        input_df,
+        days_in_milk_col="DaysInMilk",
+        milking_yield_col="DailyMilkingYield",
+        test_id_col="TestId",
+    )
 
-        if len(lactation_df) < 2:
-            print(f"Skipping TestId {lactation}: not enough data points for interpolation.")
-            continue
+    if not isinstance(result_df, pd.DataFrame):
+        raise ValueError("lactationcurve test_interval_method did not return a DataFrame.")
 
-        # Start and end points
-        start = lactation_df.iloc[0]
-        end = lactation_df.iloc[-1]
+    if result_df.empty:
+        return pd.DataFrame(columns=["TestId", "Total305Yield"])
 
-        # Start contribution
-        MY0 = start['DaysInMilk'] * start['DailyMilkingYield']
+    normalized_names = {c: c.lower().replace(" ", "").replace("_", "") for c in result_df.columns}
+    test_id_col = None
+    yield_col = None
 
-        # End contribution
-        MYend = (306 - end['DaysInMilk']) * end['DailyMilkingYield']
+    for col, norm in normalized_names.items():
+        if norm in {"testid", "testids", "id"} and test_id_col is None:
+            test_id_col = col
+        if norm in {"total305yield", "totalyield", "total305", "predicted305yield"} and yield_col is None:
+            yield_col = col
 
-        # Intermediate trapezoidal contributions
-        lactation_df['width'] = lactation_df['DaysInMilk'].diff().shift(-1)
-        lactation_df['avg_yield'] = (lactation_df['DailyMilkingYield'] + lactation_df['DailyMilkingYield'].shift(-1)) / 2
-        lactation_df['trapezoid_area'] = lactation_df['width'] * lactation_df['avg_yield']
+    if test_id_col is None or yield_col is None:
+        if len(result_df.columns) >= 2:
+            test_id_col = result_df.columns[0]
+            yield_col = result_df.columns[1]
+        else:
+            raise ValueError(
+                f"Unexpected lactationcurve output columns: {list(result_df.columns)}"
+            )
 
-        total_intermediate = lactation_df['trapezoid_area'].sum()
-
-        total_yield = MY0 + total_intermediate + MYend
-        result.append((lactation, total_yield))
-
-    return pd.DataFrame(result, columns=['TestId', 'Total305Yield'])
+    normalized_df = result_df[[test_id_col, yield_col]].copy()
+    normalized_df.columns = ["TestId", "Total305Yield"]
+    return normalized_df
 
 
 def upload_excel_file(excel_stream, filename, storage_mode="local"):
@@ -115,12 +124,15 @@ def upload_excel_file(excel_stream, filename, storage_mode="local"):
     Returns a public URL (Azure) or route link (local).
     """
     if storage_mode == "azure":
-        AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-        AZURE_CONTAINER_NAME = os.getenv("AZURE_CONTAINER_NAME")
+        conn = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+        container_name = os.getenv("AZURE_CONTAINER_NAME")
+        if not conn:
+            raise ValueError("AZURE_STORAGE_CONNECTION_STRING is not set")
+        blob_name = f"{AZURE_GENERATED_DATASETS_PREFIX}/{filename}"
 
-        blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
-        container_client = blob_service_client.get_container_client(AZURE_CONTAINER_NAME)
-        blob_client = container_client.get_blob_client(filename)
+        blob_service_client = BlobServiceClient.from_connection_string(conn)
+        container_client = blob_service_client.get_container_client(container_name)
+        blob_client = container_client.get_blob_client(blob_name)
 
         blob_client.upload_blob(
             excel_stream,
@@ -130,7 +142,10 @@ def upload_excel_file(excel_stream, filename, storage_mode="local"):
             )
         )
 
-        return f"https://{blob_service_client.account_name}.blob.core.windows.net/{AZURE_CONTAINER_NAME}/{filename}"
+        return (
+            f"https://{blob_service_client.account_name}.blob.core.windows.net/"
+            f"{container_name}/{AZURE_GENERATED_DATASETS_PREFIX}/{filename}"
+        )
 
     elif storage_mode == "local":
         local_dir = os.path.join(os.getcwd(), "data", "generated")
@@ -171,7 +186,7 @@ def generate_random_dataset():
 
         # Filename
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        filename = f"{test_set_id}_{timestamp}.xlsx"
+        filename = f"{test_set_id}.xlsx"
 
         # Upload both copies
         download_link_locally = upload_excel_file(excel_stream_local, filename, storage_mode="local")
@@ -208,7 +223,7 @@ def generate_random_dataset():
         
         generate_obj.save()
         # Estimated yields
-        estimated_yields = test_interval_method(generated_df)
+        estimated_yields = estimate_yields_with_lactationcurve(generated_df)
         generate_obj.test_obj_ids = list(estimated_yields['TestId'])
         generate_obj.calculated_milk_yields = list(estimated_yields['Total305Yield'])
         generate_obj.download_url = download_link
